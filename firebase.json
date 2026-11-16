@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"nextgig-app","appId":"1:830761256183:android:1643cec6479d8a0c173ff2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"nextgig-app","configurations":{"android":"1:830761256183:android:1643cec6479d8a0c173ff2","ios":"1:830761256183:ios:dc130af7c0f08f78173ff2"}}}}}}
