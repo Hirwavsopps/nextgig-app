@@ -15,6 +15,14 @@ must match Firestore exactly, so nobody adds fields without updating this file.
 | requiredSkills | array<string> | |
 | posterName | string | |
 | posterId | string | FK -> users/{uid} |
+| duration | string | e.g. "2 weeks"; empty = flexible |
+| level | string | e.g. "Jr / Mid"; empty = any |
+| applicantCount | number | default 0 |
+| verifiedClient | bool | default false |
+| escrowFunded | bool | recorded status only |
+| deliverables | array<string> | |
+| mentorName | string | optional |
+| imageUrl | string | optional, Cloudinary URL |
 | createdAt | timestamp | server timestamp; feed is ordered by it |
 
 ## users
