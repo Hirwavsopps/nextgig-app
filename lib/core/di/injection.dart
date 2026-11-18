@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nextgig/core/theme/theme_cubit.dart';
+import 'package:nextgig/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:nextgig/features/auth/domain/repositories/auth_repository.dart';
+import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/gigs/data/datasources/gig_remote_data_source.dart';
 import 'package:nextgig/features/gigs/data/repositories/gig_repository_impl.dart';
 import 'package:nextgig/features/gigs/domain/repositories/gig_repository.dart';
@@ -22,6 +26,11 @@ Future<void> configureDependencies() async {
   // Core / app-wide state
   sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit(sl()));
   sl.registerLazySingleton<BookmarksCubit>(() => BookmarksCubit());
+
+  // Feature: auth
+  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<AuthCubit>(() => AuthCubit(sl()));
 
   // Feature: gigs
   sl.registerLazySingleton<GigRemoteDataSource>(
