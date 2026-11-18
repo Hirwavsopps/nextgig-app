@@ -8,11 +8,11 @@ class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _auth;
 
   AppUser _toUser(User u) => AppUser(
-    uid: u.uid,
-    email: u.email ?? '',
-    name: u.displayName ?? '',
-    emailVerified: u.emailVerified,
-  );
+        uid: u.uid,
+        email: u.email ?? '',
+        name: u.displayName ?? '',
+        emailVerified: u.emailVerified,
+      );
 
   @override
   Stream<AppUser?> authStateChanges() =>
