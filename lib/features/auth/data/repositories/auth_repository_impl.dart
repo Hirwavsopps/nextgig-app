@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:nextgig/features/auth/domain/entities/app_user.dart';
 import 'package:nextgig/features/auth/domain/repositories/auth_repository.dart';
 
@@ -7,12 +8,15 @@ class AuthRepositoryImpl implements AuthRepository {
 
   final FirebaseAuth _auth;
 
+  /// Google Sign-In must be initialized once per app run.
+  static bool _googleInitialized = false;
+
   AppUser _toUser(User u) => AppUser(
-        uid: u.uid,
-        email: u.email ?? '',
-        name: u.displayName ?? '',
-        emailVerified: u.emailVerified,
-      );
+    uid: u.uid,
+    email: u.email ?? '',
+    name: u.displayName ?? '',
+    emailVerified: u.emailVerified,
+  );
 
   @override
   Stream<AppUser?> authStateChanges() =>
@@ -66,6 +70,42 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> signOut() => _auth.signOut();
 
+  @override
+  Future<void> signInWithGoogle() async {
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+      if (!_googleInitialized) {
+        await googleSignIn.initialize();
+        _googleInitialized = true;
+      }
+      final account = await googleSignIn.authenticate();
+      final idToken = account.authentication.idToken;
+      await _auth.signInWithCredential(
+        GoogleAuthProvider.credential(idToken: idToken),
+      );
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return;
+      throw const AuthFailure('Google sign-in failed. Please try again.');
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_message(e.code));
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    try {
+      await _auth.currentUser?.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      throw AuthFailure(_message(e.code));
+    }
+  }
+
+  @override
+  Future<void> reloadUser() async {
+    await _auth.currentUser?.reload();
+  }
+
+  /// Maps Firebase error codes to friendly messages for the UI.
   String _message(String code) {
     switch (code) {
       case 'invalid-email':

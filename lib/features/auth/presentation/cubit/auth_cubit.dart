@@ -46,6 +46,17 @@ class AuthCubit extends Cubit<AuthState> {
     () => _repo.sendPasswordReset(email),
     info: 'Password reset email sent. Check your inbox.',
   );
+  Future<void> signInWithGoogle() => _run(_repo.signInWithGoogle);
+
+  Future<void> resendVerification() => _run(
+    _repo.sendEmailVerification,
+    info: 'Verification email sent. Check your inbox.',
+  );
+
+  Future<void> refreshUser() async {
+    await _repo.reloadUser();
+    emit(AuthState(user: _repo.currentUser, initialized: true));
+  }
 
   Future<void> signOut() => _repo.signOut();
 

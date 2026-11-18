@@ -107,6 +107,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _submit,
                       ),
                       const SizedBox(height: 12),
+                      AppButton(
+                        label: 'Continue with Google',
+                        outlined: true,
+                        isLoading: state.busy,
+                        onPressed: () =>
+                            context.read<AuthCubit>().signInWithGoogle(),
+                      ),
+                      const SizedBox(height: 12),
                       TextButton(
                         onPressed: () => context.go(AppRoutes.signup),
                         child: const Text("Don't have an account? Sign up"),
