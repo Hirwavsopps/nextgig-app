@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nextgig/core/theme/app_colors.dart';
 
-/// Corner radii used across the app (taken from the Figma cards and fields).
 class AppRadii {
   const AppRadii._();
 
@@ -9,14 +8,9 @@ class AppRadii {
   static const double control = 16;
 }
 
-/// Single source of truth for look and feel. Screens read colors and text
-/// styles from Theme.of(context), never hardcode them.
 class AppTheme {
   const AppTheme._();
 
-  /// The Figma file looks like Plus Jakarta Sans. Add the font files under
-  /// assets/fonts and declare them in pubspec.yaml; until then Flutter falls
-  /// back to the default font without any error.
   static const String fontFamily = 'PlusJakartaSans';
 
   static NavigationBarThemeData _navigationBarTheme({
