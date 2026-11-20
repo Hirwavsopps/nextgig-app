@@ -11,6 +11,7 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.prefixIcon,
+    this.suffixIcon,
     this.onChanged,
   });
 
@@ -21,6 +22,7 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final Widget? prefixIcon;
+  final Widget? suffixIcon;
   final ValueChanged<String>? onChanged;
 
   @override
@@ -35,6 +37,7 @@ class AppTextField extends StatelessWidget {
         labelText: label,
         hintText: hint,
         prefixIcon: prefixIcon,
+        suffixIcon: suffixIcon,
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
