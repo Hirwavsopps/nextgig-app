@@ -26,7 +26,8 @@ final GoRouter appRouter = GoRouter(
   redirect: (context, state) {
     final auth = sl<AuthCubit>().state;
     if (!auth.initialized) return null;
-    final onAuthPage = state.matchedLocation == AppRoutes.login ||
+    final onAuthPage =
+        state.matchedLocation == AppRoutes.login ||
         state.matchedLocation == AppRoutes.signup;
     if (!auth.isAuthenticated && !onAuthPage) return AppRoutes.login;
     if (auth.isAuthenticated && onAuthPage) return AppRoutes.home;

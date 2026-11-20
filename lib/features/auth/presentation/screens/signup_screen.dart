@@ -192,9 +192,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     AppButton(
                       label: 'Continue with Google',
                       outlined: true,
-                      isLoading: state.busy,
-                      onPressed: () =>
-                          context.read<AuthCubit>().signInWithGoogle(),
+                      onPressed: state.busy
+                          ? null
+                          : () => context.read<AuthCubit>().signInWithGoogle(),
                     ),
                     const SizedBox(height: 12),
                     TextButton(
