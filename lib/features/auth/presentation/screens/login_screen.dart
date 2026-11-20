@@ -142,9 +142,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             AppButton(
                               label: 'Continue with Google',
                               outlined: true,
-                              isLoading: state.busy,
-                              onPressed: () =>
-                                  context.read<AuthCubit>().signInWithGoogle(),
+                              onPressed: state.busy
+                                  ? null
+                                  : () => context
+                                        .read<AuthCubit>()
+                                        .signInWithGoogle(),
                             ),
                           ],
                         ),
