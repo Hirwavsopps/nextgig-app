@@ -29,7 +29,9 @@ Future<void> configureDependencies() async {
 
   // Feature: auth
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(sl(), sl()),
+  );
   sl.registerLazySingleton<AuthCubit>(() => AuthCubit(sl()));
 
   // Feature: gigs
