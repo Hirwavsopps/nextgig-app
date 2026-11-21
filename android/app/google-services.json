@@ -12,7 +12,20 @@
           "package_name": "com.nextgig.nextgig"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "830761256183-jf1vbtnfocks02uqsntbfjhfovj9m3ak.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nextgig.nextgig",
+            "certificate_hash": "6434b10fc811cf594b77c0ee23a78ecaf4618fd4"
+          }
+        },
+        {
+          "client_id": "830761256183-ujrtlbiljtmmmdqpabglpbje3r6k73hg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDD1vZbi0l8BWxVrP_1MY-1o4vTAEXJSxk"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "830761256183-ujrtlbiljtmmmdqpabglpbje3r6k73hg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "830761256183-vsgetiot2ai6ucrqf77bphl27b1262s1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.nextgig.nextgig"
+              }
+            }
+          ]
         }
       }
     }

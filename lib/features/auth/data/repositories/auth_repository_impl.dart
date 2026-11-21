@@ -55,6 +55,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       await user.sendEmailVerification();
     } on FirebaseAuthException catch (e) {
+      // ignore: avoid_print
+      print('AUTH ERROR (signUp): ${e.code}');
       throw AuthFailure(_message(e.code));
     }
   }
@@ -68,6 +70,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       await _ensureProfileQuietly(cred.user);
     } on FirebaseAuthException catch (e) {
+      // ignore: avoid_print
+      print('AUTH ERROR (signIn): ${e.code}');
       throw AuthFailure(_message(e.code));
     }
   }
@@ -138,7 +142,9 @@ class AuthRepositoryImpl implements AuthRepository {
         'role': role.name,
         'createdAt': FieldValue.serverTimestamp(),
       });
-    } on FirebaseException {
+    } on FirebaseException catch (e) {
+      // ignore: avoid_print
+      print('FIRESTORE ERROR: ${e.code}');
       throw const AuthFailure(
         'Your account was created, but saving your profile failed. '
         'Please try again.',
