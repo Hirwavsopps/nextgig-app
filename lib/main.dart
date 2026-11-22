@@ -9,9 +9,5 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await configureDependencies();
 
-  // DEV ONLY: to fill Firestore with sample gigs, import
-  // 'package:nextgig/core/utils/seed_gigs.dart' and run this ONCE, then delete it.
-  // await seedSampleGigs(FirebaseFirestore.instance);
-
   runApp(const NextGigApp());
 }

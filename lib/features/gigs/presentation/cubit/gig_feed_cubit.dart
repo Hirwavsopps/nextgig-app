@@ -14,8 +14,11 @@ class GigFeedCubit extends Cubit<GigFeedState> {
   final WatchGigs _watchGigs;
   StreamSubscription<List<Gig>>? _subscription;
 
-  void start() {
-    emit(state.copyWith(status: GigFeedStatus.loading));
+  void start({String? initialCategory}) {
+    final filter = initialCategory == null || initialCategory.isEmpty
+        ? state.filter
+        : state.filter.copyWith(category: initialCategory);
+    emit(state.copyWith(status: GigFeedStatus.loading, filter: filter));
     _subscription?.cancel();
     _subscription = _watchGigs().listen(
       (gigs) =>

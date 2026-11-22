@@ -21,6 +21,7 @@ class Gig extends Equatable {
     this.mentorName,
     this.imageUrl,
     this.createdAt,
+    this.deadline,
   });
 
   final String id;
@@ -56,6 +57,9 @@ class Gig extends Equatable {
   final String? imageUrl;
   final DateTime? createdAt;
 
+  /// Optional date the work should be finished.
+  final DateTime? deadline;
+
   @override
   List<Object?> get props => [
     id,
@@ -76,5 +80,6 @@ class Gig extends Equatable {
     mentorName,
     imageUrl,
     createdAt,
+    deadline,
   ];
 }

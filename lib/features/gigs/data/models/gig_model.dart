@@ -22,10 +22,36 @@ class GigModel extends Gig {
     super.mentorName,
     super.imageUrl,
     super.createdAt,
+    super.deadline,
   });
+
+  factory GigModel.fromGig(Gig gig) {
+    return GigModel(
+      id: gig.id,
+      title: gig.title,
+      description: gig.description,
+      category: gig.category,
+      neighborhood: gig.neighborhood,
+      pay: gig.pay,
+      requiredSkills: gig.requiredSkills,
+      posterName: gig.posterName,
+      posterId: gig.posterId,
+      duration: gig.duration,
+      level: gig.level,
+      applicantCount: gig.applicantCount,
+      verifiedClient: gig.verifiedClient,
+      escrowFunded: gig.escrowFunded,
+      deliverables: gig.deliverables,
+      mentorName: gig.mentorName,
+      imageUrl: gig.imageUrl,
+      createdAt: gig.createdAt,
+      deadline: gig.deadline,
+    );
+  }
 
   factory GigModel.fromMap(String id, Map<String, dynamic> map) {
     final created = map['createdAt'];
+    final deadline = map['deadline'];
     return GigModel(
       id: id,
       title: map['title'] as String? ?? '',
@@ -49,10 +75,11 @@ class GigModel extends Gig {
       mentorName: map['mentorName'] as String?,
       imageUrl: map['imageUrl'] as String?,
       createdAt: created is Timestamp ? created.toDate() : null,
+      deadline: deadline is Timestamp ? deadline.toDate() : null,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({bool create = false}) {
     return {
       'title': title,
       'description': description,
@@ -70,7 +97,8 @@ class GigModel extends Gig {
       'deliverables': deliverables,
       if (mentorName != null) 'mentorName': mentorName,
       if (imageUrl != null) 'imageUrl': imageUrl,
-      'createdAt': FieldValue.serverTimestamp(),
+      if (deadline != null) 'deadline': Timestamp.fromDate(deadline!),
+      if (create) 'createdAt': FieldValue.serverTimestamp(),
     };
   }
 }
