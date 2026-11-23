@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:nextgig/features/verification/domain/entities/verification_status.dart';
 
 class PortfolioItem extends Equatable {
   const PortfolioItem({
@@ -23,7 +24,8 @@ class PortfolioItem extends Equatable {
   List<Object?> get props => [title, imageUrl, link];
 }
 
-/// A skill on a user's profile. [verified] is set by an endorsement.
+/// A skill on a user's profile. [verified] and the verification fields are
+/// only written by an authorized reviewer (see firestore.rules).
 class Skill extends Equatable {
   const Skill({
     required this.id,
@@ -33,6 +35,12 @@ class Skill extends Equatable {
     this.proofUrl,
     this.proofStoragePath,
     this.verified = false,
+    this.verificationStatus,
+    this.verificationId,
+    this.verifiedAt,
+    this.verifiedById,
+    this.verifiedByName = '',
+    this.verifiedByRelationship = '',
   });
 
   final String id;
@@ -45,6 +53,22 @@ class Skill extends Equatable {
   final String? proofStoragePath;
   final bool verified;
 
+  /// Raw `verificationStatus` value; read it through [status].
+  final String? verificationStatus;
+
+  /// The latest verificationRequests document for this skill.
+  final String? verificationId;
+  final DateTime? verifiedAt;
+  final String? verifiedById;
+  final String verifiedByName;
+  final String verifiedByRelationship;
+
+  VerificationStatus get status =>
+      VerificationStatus.parse(verificationStatus, legacyVerified: verified);
+
+  /// Only true once a reviewer has approved the evidence.
+  bool get isVerified => status == VerificationStatus.verified;
+
   static const proficiencies = ['beginner', 'intermediate', 'advanced'];
 
   @override
@@ -56,5 +80,11 @@ class Skill extends Equatable {
     proofUrl,
     proofStoragePath,
     verified,
+    verificationStatus,
+    verificationId,
+    verifiedAt,
+    verifiedById,
+    verifiedByName,
+    verifiedByRelationship,
   ];
 }
