@@ -8,6 +8,7 @@ class AppRoutes {
   static const String gigs = '/gigs';
   static const String mentors = '/mentors';
   static const String messages = '/messages';
+  static String message(String id) => '/messages/$id';
   static const String profile = '/profile';
   static const String editProfile = '/profile/edit';
   static const String settings = '/profile/settings';

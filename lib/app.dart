@@ -23,9 +23,7 @@ class NextGigApp extends StatelessWidget {
         BlocProvider<SettingsCubit>.value(value: sl<SettingsCubit>()),
         BlocProvider<BookmarksCubit>.value(value: sl<BookmarksCubit>()),
         BlocProvider<AuthCubit>.value(value: sl<AuthCubit>()),
-        BlocProvider<NotificationsCubit>.value(
-          value: sl<NotificationsCubit>(),
-        ),
+        BlocProvider<NotificationsCubit>.value(value: sl<NotificationsCubit>()),
       ],
       child: _NotificationsAuthSync(
         child: BlocBuilder<ThemeCubit, ThemeMode>(

@@ -14,7 +14,9 @@ import 'package:nextgig/features/gigs/domain/entities/gig.dart';
 import 'package:nextgig/features/earnings/presentation/screens/earnings_screen.dart';
 import 'package:nextgig/features/gigs/presentation/screens/gig_detail_screen.dart';
 import 'package:nextgig/features/gigs/presentation/screens/gig_feed_screen.dart';
+import 'package:nextgig/features/messages/presentation/cubit/thread_cubit.dart';
 import 'package:nextgig/features/messages/presentation/screens/messages_screen.dart';
+import 'package:nextgig/features/messages/presentation/screens/thread_screen.dart';
 import 'package:nextgig/features/mentorship/presentation/screens/mentors_screen.dart';
 import 'package:nextgig/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:nextgig/features/postings/presentation/screens/gig_form_screen.dart';
@@ -73,9 +75,9 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-  path: AppRoutes.notifications,
-  builder: (context, state) => const NotificationsScreen(),
-),
+      path: AppRoutes.notifications,
+      builder: (context, state) => const NotificationsScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           MainShell(navigationShell: navigationShell),
@@ -118,6 +120,19 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: AppRoutes.messages,
               builder: (context, state) => const MessagesScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id'] ?? '';
+                    final uid = sl<AuthCubit>().state.user?.uid ?? '';
+                    return BlocProvider(
+                      create: (_) => sl<ThreadCubit>()..watch(id, uid),
+                      child: ThreadScreen(conversationId: id),
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),
