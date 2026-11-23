@@ -23,7 +23,9 @@ class GigApplyBar extends StatelessWidget {
     final uid = context.read<AuthCubit>().state.user?.uid;
     if (uid == null) return const SizedBox.shrink();
     return BlocProvider(
-      create: (_) => sl<GigApplicationsCubit>()..watch(gig.id),
+      create: (_) =>
+          sl<GigApplicationsCubit>()
+            ..watch(gig.id, viewerId: uid, viewerIsPoster: gig.posterId == uid),
       child: _ApplyBody(gig: gig, uid: uid),
     );
   }
