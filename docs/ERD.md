@@ -23,13 +23,71 @@ must match Firestore exactly, so nobody adds fields without updating this file.
 | deliverables | array<string> | |
 | mentorName | string | optional |
 | imageUrl | string | optional, Cloudinary URL |
+| deadline | timestamp | optional |
 | createdAt | timestamp | server timestamp; feed is ordered by it |
 
 ## users
-TODO (member 3): uid (PK), name, email, role, bio, ...
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | Firebase Auth uid |
+| name | string | |
+| email | string | |
+| phone | string | |
+| role | string | talent or poster |
+| bio | string | |
+| photoUrl | string | Cloudinary URL |
+| createdAt | timestamp | |
+
+## users/{uid}/skills
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | |
+| name | string | |
+| proficiency | string | beginner, intermediate, or advanced |
+| portfolio | array<{title, imageUrl, link}> | imageUrl is a Cloudinary URL |
+| proofUrl | string | Firebase Storage download URL |
+| proofStoragePath | string | |
+| verified | bool | set true by an endorsement |
+
+## users/{uid}/skills/{id}/endorsements
+| Field | Type | Notes |
+|---|---|---|
+| endorserId | string | cannot be the skill owner |
+| endorserName | string | |
+| relationship | string | mentor, lecturer, or client |
+| note | string | |
+| createdAt | timestamp | |
 
 ## applications
-TODO (member 5): id (PK), gigId (FK), applicantId (FK), status, createdAt
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | |
+| gigId | string | FK -> gigs |
+| gigTitle | string | copied so the list does not re-read the gig |
+| applicantId | string | FK -> users |
+| applicantName | string | |
+| posterId | string | FK -> users |
+| status | string | applied, shortlisted, hired, completed, declined |
+| createdAt | timestamp | |
 
-## skills / endorsements / reviews / earnings
-TODO (members 3, 4, 6)
+## reviews
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | same as the application id, one review each |
+| gigId | string | |
+| applicationId | string | |
+| reviewerId | string | the poster |
+| revieweeId | string | the applicant |
+| rating | number | 1 to 5 |
+| comment | string | |
+| createdAt | timestamp | |
+
+## users/{uid}/earnings
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | |
+| amount | number | RWF, recorded only |
+| gigTitle | string | |
+| gigId | string | optional |
+| mobileMoneyRef | string | MoMo or Airtel reference, not a live charge |
+| createdAt | timestamp | |

@@ -1,7 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
+import 'package:nextgig/core/cloudinary/cloudinary_uploader.dart';
+import 'package:nextgig/core/settings/settings_cubit.dart';
+import 'package:nextgig/core/storage/proof_uploader.dart';
 import 'package:nextgig/core/theme/theme_cubit.dart';
+import 'package:nextgig/features/applications/data/application_repository.dart';
+import 'package:nextgig/features/applications/presentation/cubit/gig_applications_cubit.dart';
+import 'package:nextgig/features/earnings/data/earnings_repository.dart';
+import 'package:nextgig/features/earnings/presentation/cubit/earnings_cubit.dart';
+import 'package:nextgig/features/postings/presentation/cubit/postings_cubit.dart';
+import 'package:nextgig/features/profile/data/profile_repository.dart';
+import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:nextgig/features/reviews/data/review_repository.dart';
 import 'package:nextgig/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:nextgig/features/auth/domain/repositories/auth_repository.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
@@ -30,6 +42,10 @@ Future<void> configureDependencies() async {
 
   // Core / app-wide state
   sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit(sl()));
+  sl.registerLazySingleton<SettingsCubit>(() => SettingsCubit(sl()));
+  sl.registerLazySingleton<CloudinaryUploader>(() => CloudinaryUploader());
+  sl.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+  sl.registerLazySingleton<ProofUploader>(() => ProofUploader(sl()));
   sl.registerLazySingleton<BookmarksCubit>(() => BookmarksCubit());
 
   // Feature: auth
@@ -68,4 +84,18 @@ Future<void> configureDependencies() async {
       delete: sl(),
     ),
   );
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepository(sl(), sl()),
+  );
+  sl.registerLazySingleton<ReviewRepository>(() => ReviewRepository(sl()));
+  sl.registerLazySingleton<ApplicationRepository>(
+    () => ApplicationRepository(sl()),
+  );
+  sl.registerLazySingleton<EarningsRepository>(() => EarningsRepository(sl()));
+  sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl()));
+  sl.registerFactory<PostingsCubit>(() => PostingsCubit(sl(), sl()));
+  sl.registerFactory<GigApplicationsCubit>(
+    () => GigApplicationsCubit(sl(), sl()),
+  );
+  sl.registerFactory<EarningsCubit>(() => EarningsCubit(sl()));
 }
