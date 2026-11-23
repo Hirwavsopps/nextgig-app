@@ -15,7 +15,7 @@ class PostingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.read<AuthCubit>().state.user?.uid;
+    final uid = context.watch<AuthCubit>().state.user?.uid;
     if (uid == null) return const SizedBox.shrink();
     return BlocProvider(
       create: (_) => sl<PostingsCubit>()..watch(uid),

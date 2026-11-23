@@ -20,7 +20,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final me = context.read<AuthCubit>().state.user;
+    final me = context.watch<AuthCubit>().state.user;
     final profileUid = uid ?? me?.uid;
     if (profileUid == null) return const SizedBox.shrink();
     final mine = profileUid == me?.uid;

@@ -72,7 +72,7 @@ class GigCard extends StatelessWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         letterSpacing: 0.8,
                         fontWeight: FontWeight.w700,
-                        color: scheme.onSurfaceVariant,
+                        color: scheme.secondary,
                       ),
                     ),
                   ),
@@ -140,6 +140,7 @@ class GigCard extends StatelessWidget {
                 formatRwf(gig.pay),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
+                  color: scheme.secondary,
                 ),
               ),
               const SizedBox(height: 6),

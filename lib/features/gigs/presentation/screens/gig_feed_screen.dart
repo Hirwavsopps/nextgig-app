@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,8 @@ import 'package:nextgig/core/constants/app_constants.dart';
 import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
+import 'package:nextgig/core/utils/messenger.dart';
+import 'package:nextgig/core/utils/seed_gigs.dart';
 import 'package:nextgig/core/widgets/brand_logo.dart';
 import 'package:nextgig/core/widgets/empty_view.dart';
 import 'package:nextgig/core/widgets/error_view.dart';
@@ -28,7 +31,7 @@ class GigFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.read<AuthCubit>().state.user?.uid;
+    final uid = context.watch<AuthCubit>().state.user?.uid;
     final category = context.read<SettingsCubit>().state.preferredCategory;
     return MultiBlocProvider(
       providers: [
@@ -40,13 +43,32 @@ class GigFeedScreen extends StatelessWidget {
             create: (_) => sl<ProfileCubit>()..watch(uid),
           ),
       ],
-      child: const _GigFeedView(),
+      child: _GigFeedView(showRecommended: uid != null),
     );
   }
 }
 
-class _GigFeedView extends StatelessWidget {
-  const _GigFeedView();
+class _GigFeedView extends StatefulWidget {
+  const _GigFeedView({required this.showRecommended});
+
+  /// True only in the same build that provided [ProfileCubit].
+  final bool showRecommended;
+
+  @override
+  State<_GigFeedView> createState() => _GigFeedViewState();
+}
+
+class _GigFeedViewState extends State<_GigFeedView> {
+  var _seedStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _seedIfEmpty(context.read<GigFeedCubit>().state);
+    });
+  }
 
   void _openFilters(BuildContext context) {
     final cubit = context.read<GigFeedCubit>();
@@ -118,28 +140,63 @@ class _GigFeedView extends StatelessWidget {
   }
 
   @override
+  void didUpdateWidget(covariant _GigFeedView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.showRecommended && !oldWidget.showRecommended) {
+      _seedIfEmpty(context.read<GigFeedCubit>().state);
+    }
+  }
+
+  void _seedIfEmpty(GigFeedState state) {
+    if (_seedStarted) return;
+    if (state.status != GigFeedStatus.loaded || state.allGigs.isNotEmpty) {
+      return;
+    }
+    final user = context.read<AuthCubit>().state.user;
+    if (user == null) return;
+    _seedStarted = true;
+    _writeSample(
+      uid: user.uid,
+      name: user.name.isEmpty ? 'NextGig user' : user.name,
+    );
+  }
+
+  Future<void> _writeSample({required String uid, required String name}) async {
+    try {
+      await seedDemoData(sl<FirebaseFirestore>(), uid: uid, name: name);
+    } catch (error) {
+      if (mounted) showAppMessage(context, '$error');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: BlocBuilder<GigFeedCubit, GigFeedState>(
-          builder: (context, state) {
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: _FeedHeader(
-                    state: state,
-                    onOpenFilters: () => _openFilters(context),
-                  ),
-                ),
-                if (state.status == GigFeedStatus.loaded &&
-                    context.read<AuthCubit>().state.user != null)
+    return BlocListener<GigFeedCubit, GigFeedState>(
+      listenWhen: (previous, next) =>
+          next.status == GigFeedStatus.loaded && next.allGigs.isEmpty,
+      listener: (context, state) => _seedIfEmpty(state),
+      child: Scaffold(
+        body: SafeArea(
+          child: BlocBuilder<GigFeedCubit, GigFeedState>(
+            builder: (context, state) {
+              return CustomScrollView(
+                slivers: [
                   SliverToBoxAdapter(
-                    child: _RecommendedRow(gigs: state.allGigs),
+                    child: _FeedHeader(
+                      state: state,
+                      onOpenFilters: () => _openFilters(context),
+                    ),
                   ),
-                ..._bodySlivers(context, state),
-              ],
-            );
-          },
+                  if (widget.showRecommended &&
+                      state.status == GigFeedStatus.loaded)
+                    SliverToBoxAdapter(
+                      child: _RecommendedRow(gigs: state.allGigs),
+                    ),
+                  ..._bodySlivers(context, state),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

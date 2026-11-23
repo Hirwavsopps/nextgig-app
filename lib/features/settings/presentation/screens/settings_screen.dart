@@ -102,10 +102,8 @@ class SettingsScreen extends StatelessWidget {
         name: user.name.isEmpty ? 'NextGig user' : user.name,
       );
       if (context.mounted) showAppMessage(context, 'Sample data is ready.');
-    } catch (_) {
-      if (context.mounted) {
-        showAppMessage(context, 'Could not load sample data.');
-      }
+    } catch (error) {
+      if (context.mounted) showAppMessage(context, '$error');
     }
   }
 }
