@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
 import 'package:nextgig/core/utils/category_icons.dart';
 import 'package:nextgig/core/utils/formatters.dart';
+import 'package:nextgig/core/widgets/gig_image.dart';
 import 'package:nextgig/core/widgets/mentor_tile.dart';
 import 'package:nextgig/core/widgets/pill.dart';
 import 'package:nextgig/core/widgets/skill_chip.dart';
@@ -31,7 +32,6 @@ class GigCard extends StatelessWidget {
       color: scheme.onSurfaceVariant,
     );
     final createdAt = gig.createdAt;
-    final imageUrl = gig.imageUrl;
     final mentor = gig.mentorName;
     final applicants =
         '${gig.applicantCount} ${gig.applicantCount == 1 ? 'applicant' : 'applicants'}';
@@ -131,10 +131,8 @@ class GigCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (imageUrl != null) ...[
-                const SizedBox(height: 12),
-                _GigImage(url: imageUrl, escrowFunded: gig.escrowFunded),
-              ],
+              const SizedBox(height: 12),
+              _GigImage(gig: gig),
               const SizedBox(height: 12),
               Text(
                 formatRwf(gig.pay),
@@ -199,10 +197,9 @@ class GigCard extends StatelessWidget {
 }
 
 class _GigImage extends StatelessWidget {
-  const _GigImage({required this.url, required this.escrowFunded});
+  const _GigImage({required this.gig});
 
-  final String url;
-  final bool escrowFunded;
+  final Gig gig;
 
   @override
   Widget build(BuildContext context) {
@@ -213,17 +210,8 @@ class _GigImage extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => ColoredBox(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: const Center(
-                  child: Icon(Icons.image_not_supported_outlined),
-                ),
-              ),
-            ),
-            if (escrowFunded)
+            GigImage(gig: gig),
+            if (gig.escrowFunded)
               const Positioned(
                 left: 10,
                 bottom: 10,
