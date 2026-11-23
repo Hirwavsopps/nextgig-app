@@ -22,6 +22,7 @@ must match Firestore exactly, so nobody adds fields without updating this file.
 | escrowFunded | bool | recorded status only |
 | deliverables | array<string> | |
 | mentorName | string | optional |
+| mentorId | string | optional, FK -> users/{uid} |
 | imageUrl | string | optional, Cloudinary URL |
 | deadline | timestamp | optional |
 | createdAt | timestamp | server timestamp; feed is ordered by it |
@@ -90,4 +91,22 @@ must match Firestore exactly, so nobody adds fields without updating this file.
 | gigTitle | string | |
 | gigId | string | optional |
 | mobileMoneyRef | string | MoMo or Airtel reference, not a live charge |
+| createdAt | timestamp | |
+
+## conversations
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | the two participant uids, sorted and joined with `_` |
+| participantIds | array<string> | exactly two uids, sorted |
+| names | map<string, string> | uid -> display name |
+| lastText | string | |
+| updatedAt | timestamp | inbox order |
+| gigId | string | optional |
+
+## conversations/{id}/messages
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | |
+| senderId | string | FK -> users |
+| text | string | |
 | createdAt | timestamp | |
