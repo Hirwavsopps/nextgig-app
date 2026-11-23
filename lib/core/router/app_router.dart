@@ -14,9 +14,14 @@ import 'package:nextgig/features/gigs/domain/entities/gig.dart';
 import 'package:nextgig/features/earnings/presentation/screens/earnings_screen.dart';
 import 'package:nextgig/features/gigs/presentation/screens/gig_detail_screen.dart';
 import 'package:nextgig/features/gigs/presentation/screens/gig_feed_screen.dart';
+import 'package:nextgig/features/gigs/presentation/screens/saved_gigs_screen.dart';
+import 'package:nextgig/features/messages/presentation/screens/chat_screen.dart';
 import 'package:nextgig/features/messages/presentation/screens/messages_screen.dart';
 import 'package:nextgig/features/mentorship/presentation/screens/mentors_screen.dart';
 import 'package:nextgig/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:nextgig/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:nextgig/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:nextgig/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:nextgig/features/postings/presentation/screens/gig_form_screen.dart';
 import 'package:nextgig/features/postings/presentation/screens/postings_screen.dart';
 import 'package:nextgig/features/profile/domain/entities/skill.dart';
@@ -31,9 +36,18 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 /// App navigation with an auth redirect.
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: AppRoutes.home,
+  initialLocation: AppRoutes.splash,
   refreshListenable: AuthRefreshNotifier(sl<AuthCubit>().stream),
   redirect: (context, state) {
+    // The splash always shows first, then asks for /home.
+    if (state.matchedLocation == AppRoutes.splash) return null;
+    // First launch on this phone: onboarding before anything else.
+    final onOnboarding = state.matchedLocation == AppRoutes.onboarding;
+    if (!sl<OnboardingCubit>().hasSeen) {
+      return onOnboarding ? null : AppRoutes.onboarding;
+    }
+    if (onOnboarding) return AppRoutes.home;
+
     final auth = sl<AuthCubit>().state;
     if (!auth.initialized) return null;
     final onAuthPage =
@@ -44,6 +58,17 @@ final GoRouter appRouter = GoRouter(
     return null;
   },
   routes: [
+    GoRoute(
+      path: AppRoutes.splash,
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      builder: (context, state) => BlocProvider<OnboardingCubit>.value(
+        value: sl<OnboardingCubit>(),
+        child: const OnboardingScreen(),
+      ),
+    ),
     GoRoute(
       path: AppRoutes.login,
       builder: (context, state) => const LoginScreen(),
@@ -73,9 +98,25 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-  path: AppRoutes.notifications,
-  builder: (context, state) => const NotificationsScreen(),
-),
+      path: AppRoutes.saved,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const SavedGigsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.chatPattern,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final title = state.extra;
+        return ChatScreen(
+          conversationId: state.pathParameters['id'] ?? '',
+          title: title is String ? title : null,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.notifications,
+      builder: (context, state) => const NotificationsScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           MainShell(navigationShell: navigationShell),

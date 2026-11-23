@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 import '../../domain/entities/app_notification.dart';
 
 class NotificationTile extends StatelessWidget {
@@ -12,12 +13,12 @@ class NotificationTile extends StatelessWidget {
   final VoidCallback onTap;
 
   IconData get _icon => switch (notification.type) {
-        NotificationType.application => Icons.assignment_ind_outlined,
-        NotificationType.message => Icons.chat_bubble_outline,
-        NotificationType.match => Icons.bolt,
-        NotificationType.payment => Icons.account_balance_wallet_outlined,
-        NotificationType.system => Icons.info_outline,
-      };
+    NotificationType.application => Icons.assignment_ind_outlined,
+    NotificationType.message => Icons.chat_bubble_outline,
+    NotificationType.match => Icons.bolt,
+    NotificationType.payment => Icons.account_balance_wallet_outlined,
+    NotificationType.system => Icons.info_outline,
+  };
 
   static String timeAgo(DateTime t) {
     final d = DateTime.now().difference(t);

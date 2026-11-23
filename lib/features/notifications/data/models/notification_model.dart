@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../domain/entities/app_notification.dart';
 
 class NotificationModel extends AppNotification {
@@ -37,13 +38,13 @@ class NotificationModel extends AppNotification {
   }
 
   Map<String, dynamic> toMap() => {
-        'userId': userId,
-        'senderId': senderId,
-        'type': type.name,
-        'title': title,
-        'body': body,
-        if (gigId != null) 'gigId': gigId,
-        'isRead': isRead,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
+    'userId': userId,
+    'senderId': senderId,
+    'type': type.name,
+    'title': title,
+    'body': body,
+    if (gigId != null) 'gigId': gigId,
+    'isRead': isRead,
+    'createdAt': FieldValue.serverTimestamp(),
+  };
 }

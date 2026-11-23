@@ -26,6 +26,15 @@ class AppNotification extends Equatable {
   final DateTime createdAt;
 
   @override
-  List<Object?> get props =>
-      [id, userId, senderId, type, title, body, gigId, isRead, createdAt];
+  List<Object?> get props => [
+    id,
+    userId,
+    senderId,
+    type,
+    title,
+    body,
+    gigId,
+    isRead,
+    createdAt,
+  ];
 }

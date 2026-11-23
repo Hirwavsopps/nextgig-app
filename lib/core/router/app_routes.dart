@@ -1,6 +1,8 @@
 class AppRoutes {
   const AppRoutes._();
 
+  static const String splash = '/splash';
+  static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String signup = '/signup';
 
@@ -17,6 +19,10 @@ class AppRoutes {
 
   static const String gigDetailPattern = '/gig/:id';
   static String gigDetail(String id) => '/gig/$id';
+
+  static const String saved = '/saved';
+  static const String chatPattern = '/chat/:id';
+  static String chat(String conversationId) => '/chat/$conversationId';
 
   static const notifications = '/notifications';
   static const String userPattern = '/user/:uid';
