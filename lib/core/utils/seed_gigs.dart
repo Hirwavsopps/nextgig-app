@@ -1,11 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// DEV ONLY. Writes sample gigs to Firestore so the feed is not empty.
-/// Works while Firestore is in test mode (or your rules allow the write).
-/// Call it once from main.dart, then remove the call.
-Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
+/// Fills an empty database, then the signed-in user's skills, one application,
+/// a completed application with a review, and two earnings rows.
+/// Gigs are posted by [uid] because rules only let the signed-in user create them.
+/// The verified skill is written by the owner. A real endorsement still requires
+/// a second account, because a user cannot endorse themselves.
+Future<void> seedDemoData(
+  FirebaseFirestore firestore, {
+  required String uid,
+  required String name,
+}) async {
   final samples = <Map<String, Object?>>[
     {
+      'id': 'seed-brand',
+      'imageUrl': 'https://picsum.photos/id/1060/800/450',
       'title': 'Brand Identity & Packaging Redesign',
       'description':
           'We are refreshing our single-origin specialty coffee packaging for '
@@ -30,6 +38,7 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'mentorName': 'David Mugisha (Senior Creative Lead)',
     },
     {
+      'id': 'seed-wireframes',
       'title': 'Mobile App Wireframes & Design System',
       'description':
           'Create wireframes for a 6-screen booking app and a small design '
@@ -48,6 +57,7 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'deliverables': ['6 wireframe screens', 'Color and type tokens'],
     },
     {
+      'id': 'seed-photo',
       'title': 'Product Photography & Short Video Reel',
       'description': 'One-day shoot of 20 products plus a 30-second reel.',
       'category': 'Photography',
@@ -64,6 +74,7 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'deliverables': ['15 Photos', '3 Reels'],
     },
     {
+      'id': 'seed-salon',
       'title': 'Build a landing page for a salon',
       'description':
           'Simple 3-section responsive page with contact form and gallery.',
@@ -81,6 +92,7 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'deliverables': ['Responsive landing page', 'Contact form'],
     },
     {
+      'id': 'seed-tutor',
       'title': 'Math tutor for S3 student',
       'description':
           'Two evenings per week for one month, algebra and geometry.',
@@ -98,6 +110,7 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'deliverables': [],
     },
     {
+      'id': 'seed-laptop',
       'title': 'Fix a laptop that will not boot',
       'description': 'Diagnose and repair, parts paid separately.',
       'category': 'Repair',
@@ -114,6 +127,7 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'deliverables': [],
     },
     {
+      'id': 'seed-writing',
       'title': 'Write product descriptions for an online shop',
       'description': '30 short descriptions in English, some in Kinyarwanda.',
       'category': 'Writing',
@@ -130,6 +144,8 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
       'deliverables': ['30 product descriptions'],
     },
     {
+      'id': 'seed-flutter',
+      'imageUrl': 'https://picsum.photos/id/180/800/450',
       'title': 'Flutter intern for a small booking app',
       'description': 'Help build two screens and connect them to Firebase.',
       'category': 'Tech',
@@ -148,10 +164,98 @@ Future<void> seedSampleGigs(FirebaseFirestore firestore) async {
     },
   ];
 
-  final batch = firestore.batch();
-  for (final sample in samples) {
-    final ref = firestore.collection('gigs').doc();
-    batch.set(ref, {...sample, 'createdAt': FieldValue.serverTimestamp()});
+  final existingGigs = await firestore.collection('gigs').limit(1).get();
+  if (existingGigs.docs.isEmpty) {
+    final deadline = Timestamp.fromDate(
+      DateTime.now().add(const Duration(days: 21)),
+    );
+    final batch = firestore.batch();
+    for (final sample in samples) {
+      final id = sample.remove('id')! as String;
+      batch.set(firestore.collection('gigs').doc(id), {
+        ...sample,
+        'posterId': uid,
+        'deadline': deadline,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
-  await batch.commit();
+
+  final skills = firestore.collection('users').doc(uid).collection('skills');
+  final existingSkills = await skills.limit(1).get();
+  if (existingSkills.docs.isNotEmpty) return;
+
+  final flutter = skills.doc('seed-flutter-skill');
+  final figma = skills.doc('seed-figma-skill');
+  await flutter.set({
+    'name': 'Flutter',
+    'proficiency': 'intermediate',
+    'portfolio': [
+      {'title': 'Booking screens', 'imageUrl': '', 'link': ''},
+    ],
+    'proofUrl': null,
+    'proofStoragePath': null,
+    'verified': false,
+  });
+  await flutter.update({'verified': true});
+  await figma.set({
+    'name': 'Figma',
+    'proficiency': 'beginner',
+    'portfolio': const <Map<String, String>>[],
+    'proofUrl': null,
+    'proofStoragePath': null,
+    'verified': false,
+  });
+
+  final applied = firestore.collection('applications').doc('seed-applied-$uid');
+  await applied.set({
+    'gigId': 'seed-brand',
+    'gigTitle': 'Brand Identity & Packaging Redesign',
+    'applicantId': uid,
+    'applicantName': name,
+    'posterId': uid,
+    'status': 'applied',
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+
+  final completed = firestore.collection('applications').doc('seed-done-$uid');
+  await completed.set({
+    'gigId': 'seed-flutter',
+    'gigTitle': 'Flutter intern for a small booking app',
+    'applicantId': uid,
+    'applicantName': name,
+    'posterId': uid,
+    'status': 'applied',
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+  await completed.update({'status': 'completed'});
+  await firestore.collection('reviews').doc(completed.id).set({
+    'gigId': 'seed-flutter',
+    'applicationId': completed.id,
+    'reviewerId': uid,
+    'revieweeId': uid,
+    'rating': 5,
+    'comment': 'Finished the two screens and the Firestore connection.',
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+
+  final earnings = firestore
+      .collection('users')
+      .doc(uid)
+      .collection('earnings');
+  await earnings.doc('seed-earn-1').set({
+    'amount': 60000,
+    'gigTitle': 'Build a landing page for a salon',
+    'gigId': 'seed-salon',
+    'mobileMoneyRef': 'MOMO-10021',
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+  await earnings.doc('seed-earn-2').set({
+    'amount': 30000,
+    'gigTitle': 'Math tutor for S3 student',
+    'gigId': 'seed-tutor',
+    'mobileMoneyRef': 'AIRTEL-4481',
+    'createdAt': FieldValue.serverTimestamp(),
+  });
 }

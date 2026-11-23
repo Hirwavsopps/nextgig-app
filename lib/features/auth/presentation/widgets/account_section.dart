@@ -6,7 +6,10 @@ import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 /// Shows the signed-in user, an email-verification banner and a logout button.
 /// Embed it in the profile screen.
 class AccountSection extends StatelessWidget {
-  const AccountSection({super.key});
+  const AccountSection({super.key, this.photoUrl = '', this.displayName});
+
+  final String photoUrl;
+  final String? displayName;
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +30,17 @@ class AccountSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: Text(user.name.isEmpty ? 'NextGig user' : user.name),
+              leading: CircleAvatar(
+                backgroundImage: photoUrl.isEmpty
+                    ? null
+                    : NetworkImage(photoUrl),
+                child: photoUrl.isEmpty ? const Icon(Icons.person) : null,
+              ),
+              title: Text(
+                (displayName ?? user.name).isEmpty
+                    ? 'NextGig user'
+                    : (displayName ?? user.name),
+              ),
               subtitle: Text(user.email),
             ),
             if (!user.emailVerified)

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/router/app_router.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
+import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/theme/theme_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
@@ -15,6 +16,7 @@ class NextGigApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<ThemeCubit>.value(value: sl<ThemeCubit>()),
+        BlocProvider<SettingsCubit>.value(value: sl<SettingsCubit>()),
         BlocProvider<BookmarksCubit>.value(value: sl<BookmarksCubit>()),
         BlocProvider<AuthCubit>.value(value: sl<AuthCubit>()),
       ],

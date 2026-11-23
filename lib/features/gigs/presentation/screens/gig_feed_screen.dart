@@ -10,7 +10,13 @@ import 'package:nextgig/core/widgets/empty_view.dart';
 import 'package:nextgig/core/widgets/error_view.dart';
 import 'package:nextgig/core/widgets/gig_card.dart';
 import 'package:nextgig/core/widgets/loading_view.dart';
+import 'package:nextgig/core/l10n/app_strings.dart';
+import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/widgets/pill.dart';
+import 'package:nextgig/features/matching/domain/recommend_gigs.dart';
+import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nextgig/features/gigs/domain/entities/gig.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/gig_feed_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/gig_feed_state.dart';
@@ -22,8 +28,18 @@ class GigFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<GigFeedCubit>(
-      create: (_) => sl<GigFeedCubit>()..start(),
+    final uid = context.read<AuthCubit>().state.user?.uid;
+    final category = context.read<SettingsCubit>().state.preferredCategory;
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<GigFeedCubit>(
+          create: (_) => sl<GigFeedCubit>()..start(initialCategory: category),
+        ),
+        if (uid != null)
+          BlocProvider<ProfileCubit>(
+            create: (_) => sl<ProfileCubit>()..watch(uid),
+          ),
+      ],
       child: const _GigFeedView(),
     );
   }
@@ -115,6 +131,11 @@ class _GigFeedView extends StatelessWidget {
                     onOpenFilters: () => _openFilters(context),
                   ),
                 ),
+                if (state.status == GigFeedStatus.loaded &&
+                    context.read<AuthCubit>().state.user != null)
+                  SliverToBoxAdapter(
+                    child: _RecommendedRow(gigs: state.allGigs),
+                  ),
                 ..._bodySlivers(context, state),
               ],
             );
@@ -428,6 +449,81 @@ class _CategoryChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RecommendedRow extends StatelessWidget {
+  const _RecommendedRow({required this.gigs});
+
+  final List<Gig> gigs;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProfileCubit, ProfileState>(
+      builder: (context, state) {
+        final scored = recommendGigs(gigs, [
+          for (final skill in state.skills)
+            (name: skill.name, verified: skill.verified),
+        ]);
+        if (scored.isEmpty) return const SizedBox.shrink();
+        final language = context.watch<SettingsCubit>().state.language;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                AppStrings.text(language, 'recommended'),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            SizedBox(
+              height: 132,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: scored.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final item = scored[index];
+                  return SizedBox(
+                    width: 220,
+                    child: Card(
+                      child: InkWell(
+                        onTap: () => context.push(
+                          AppRoutes.gigDetail(item.gig.id),
+                          extra: item.gig,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.gig.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${item.score} ${AppStrings.text(language, 'skills_match')}',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        );
+      },
     );
   }
 }
