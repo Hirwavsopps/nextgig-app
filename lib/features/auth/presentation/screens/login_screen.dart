@@ -1,10 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nextgig/core/constants/app_images.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/widgets/app_button.dart';
 import 'package:nextgig/core/widgets/app_text_field.dart';
 import 'package:nextgig/core/widgets/brand_logo.dart';
+import 'package:nextgig/core/widgets/photo_banner.dart';
 import 'package:nextgig/core/widgets/pill.dart';
 import 'package:nextgig/features/auth/domain/validators.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
@@ -78,6 +80,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const PhotoBanner(
+                        asset: AppImages.kigaliStreet,
+                        title: 'Paid gigs across Kigali',
+                        subtitle: 'From Kimironko to Nyamirambo',
+                      ),
+                      const SizedBox(height: 20),
                       const Center(child: BrandLogo(size: 56)),
                       const SizedBox(height: 14),
                       const Center(
