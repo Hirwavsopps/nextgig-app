@@ -23,6 +23,7 @@ import 'package:nextgig/features/gigs/domain/repositories/gig_repository.dart';
 import 'package:nextgig/features/gigs/domain/usecases/watch_gigs.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/gig_feed_cubit.dart';
+import 'package:nextgig/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nextgig/features/notifications/data/datasources/notification_remote_data_source.dart';
 import 'package:nextgig/features/notifications/data/repositories/notification_repository_impl.dart';
@@ -43,6 +44,7 @@ Future<void> configureDependencies() async {
   // Core / app-wide state
   sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit(sl()));
   sl.registerLazySingleton<SettingsCubit>(() => SettingsCubit(sl()));
+  sl.registerLazySingleton<OnboardingCubit>(() => OnboardingCubit(sl()));
   sl.registerLazySingleton<CloudinaryUploader>(() => CloudinaryUploader());
   sl.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
   sl.registerLazySingleton<ProofUploader>(() => ProofUploader(sl()));
