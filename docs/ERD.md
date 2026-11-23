@@ -34,6 +34,8 @@ erDiagram
         string bio
         string photoUrl "Cloudinary URL"
         string location "Kigali neighborhood, optional"
+        string cvUrl "Firebase Storage URL, optional"
+        string cvName "original file name"
         timestamp createdAt
     }
     SKILLS {
@@ -157,6 +159,8 @@ erDiagram
 | bio | string | |
 | photoUrl | string | Cloudinary URL |
 | location | string | Kigali neighborhood from AppConstants.neighborhoods, optional |
+| cvUrl | string | download URL of `cvs/{uid}/cv.pdf` in Firebase Storage; empty = no CV |
+| cvName | string | original file name of the CV, shown on the profile |
 | createdAt | timestamp | server timestamp |
 
 ### users/{uid}/skills/{skillId}
@@ -311,6 +315,7 @@ Mentors are not a separate collection: the dashboard groups open gigs by their `
 | Path | Contents | Access |
 |---|---|---|
 | `proofs/{uid}/{skillId}/{fileName}` | certificate or portfolio proof | signed-in users read; only the owner writes; max 5 MB |
+| `cvs/{uid}/cv.pdf` | the user's CV, one per user | signed-in users read; only the owner uploads (PDF, max 5 MB) or deletes |
 
 ## Stored on the device, not in Firestore
 | Data | Where |

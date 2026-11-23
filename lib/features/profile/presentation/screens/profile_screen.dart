@@ -12,6 +12,7 @@ import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/auth/presentation/widgets/account_section.dart';
 import 'package:nextgig/features/profile/domain/entities/skill.dart';
 import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:nextgig/features/profile/presentation/widgets/cv_card.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.uid});
@@ -110,6 +111,10 @@ class _ProfileView extends StatelessWidget {
                     Text('Kigali, ${profile!.location}'),
                   ],
                 ),
+              ],
+              if (profile != null) ...[
+                const SizedBox(height: 12),
+                CvCard(profile: profile, mine: mine),
               ],
               const SizedBox(height: 16),
               Text(t('skills'), style: Theme.of(context).textTheme.titleMedium),

@@ -47,6 +47,18 @@ class ProfileRepository {
     }
   }
 
+  /// Saves (or, with empty values, clears) the CV link on the profile.
+  Future<void> setCv({
+    required String uid,
+    required String cvUrl,
+    required String cvName,
+  }) {
+    return _firestore.collection('users').doc(uid).set({
+      'cvUrl': cvUrl,
+      'cvName': cvName,
+    }, SetOptions(merge: true));
+  }
+
   Stream<List<Skill>> watchSkills(String uid) {
     return _skills(uid)
         .snapshots()
