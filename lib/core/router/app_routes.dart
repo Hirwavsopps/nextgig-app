@@ -20,6 +20,9 @@ class AppRoutes {
   static const String gigDetailPattern = '/gig/:id';
   static String gigDetail(String id) => '/gig/$id';
 
+  static const String chatPattern = '/chat/:id';
+  static String chat(String conversationId) => '/chat/$conversationId';
+
   static const notifications = '/notifications';
   static const String userPattern = '/user/:uid';
   static String user(String uid) => '/user/$uid';

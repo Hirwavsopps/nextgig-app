@@ -23,6 +23,11 @@ import 'package:nextgig/features/gigs/domain/repositories/gig_repository.dart';
 import 'package:nextgig/features/gigs/domain/usecases/watch_gigs.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/gig_feed_cubit.dart';
+import 'package:nextgig/features/messages/data/repositories/chat_repository_impl.dart';
+import 'package:nextgig/features/messages/domain/repositories/chat_repository.dart';
+import 'package:nextgig/features/messages/domain/usecases/chat_usecases.dart';
+import 'package:nextgig/features/messages/presentation/cubit/chat_cubit.dart';
+import 'package:nextgig/features/messages/presentation/cubit/conversations_cubit.dart';
 import 'package:nextgig/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nextgig/features/notifications/data/datasources/notification_remote_data_source.dart';
@@ -104,4 +109,13 @@ Future<void> configureDependencies() async {
     () => GigApplicationsCubit(sl(), sl()),
   );
   sl.registerFactory<EarningsCubit>(() => EarningsCubit(sl()));
+
+  // Feature: messages
+  sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(sl()));
+  sl.registerLazySingleton<WatchConversations>(() => WatchConversations(sl()));
+  sl.registerLazySingleton<WatchMessages>(() => WatchMessages(sl()));
+  sl.registerLazySingleton<OpenConversation>(() => OpenConversation(sl()));
+  sl.registerLazySingleton<SendMessage>(() => SendMessage(sl()));
+  sl.registerFactory<ConversationsCubit>(() => ConversationsCubit(sl()));
+  sl.registerFactory<ChatCubit>(() => ChatCubit(sl(), sl()));
 }

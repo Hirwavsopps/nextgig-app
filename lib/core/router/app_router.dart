@@ -14,6 +14,7 @@ import 'package:nextgig/features/gigs/domain/entities/gig.dart';
 import 'package:nextgig/features/earnings/presentation/screens/earnings_screen.dart';
 import 'package:nextgig/features/gigs/presentation/screens/gig_detail_screen.dart';
 import 'package:nextgig/features/gigs/presentation/screens/gig_feed_screen.dart';
+import 'package:nextgig/features/messages/presentation/screens/chat_screen.dart';
 import 'package:nextgig/features/messages/presentation/screens/messages_screen.dart';
 import 'package:nextgig/features/mentorship/presentation/screens/mentors_screen.dart';
 import 'package:nextgig/features/notifications/presentation/screens/notifications_screen.dart';
@@ -92,6 +93,17 @@ final GoRouter appRouter = GoRouter(
         return const PlaceholderScreen(
           title: 'Gig not found',
           note: 'Open a gig from the feed.',
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.chatPattern,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final title = state.extra;
+        return ChatScreen(
+          conversationId: state.pathParameters['id'] ?? '',
+          title: title is String ? title : null,
         );
       },
     ),

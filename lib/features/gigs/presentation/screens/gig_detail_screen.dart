@@ -9,7 +9,9 @@ import 'package:nextgig/core/widgets/gig_image.dart';
 import 'package:nextgig/core/widgets/mentor_tile.dart';
 import 'package:nextgig/core/widgets/pill.dart';
 import 'package:nextgig/core/widgets/skill_chip.dart';
+import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/gigs/domain/entities/gig.dart';
+import 'package:nextgig/features/messages/presentation/widgets/start_chat.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/widgets/gig_apply_bar.dart';
 
@@ -85,6 +87,24 @@ class GigDetailScreen extends StatelessWidget {
                   ),
               ],
             ),
+            if (gig.posterId.isNotEmpty &&
+                gig.posterId != context.read<AuthCubit>().state.user?.uid) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => startChat(
+                    context,
+                    otherUid: gig.posterId,
+                    otherName: gig.posterName,
+                    gigId: gig.id,
+                    gigTitle: gig.title,
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                  label: const Text('Message client'),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             _InfoRow(
               icon: Icons.place_outlined,
