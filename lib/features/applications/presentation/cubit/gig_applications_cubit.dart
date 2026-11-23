@@ -24,19 +24,21 @@ class GigApplicationsCubit extends Cubit<GigApplicationsState> {
   final ReviewRepository _reviews;
   StreamSubscription<List<GigApplication>>? _sub;
 
-  void watch({
-    required String gigId,
-    required String uid,
-    required bool asPoster,
+  void watch(
+    String gigId, {
+    required String viewerId,
+    required bool viewerIsPoster,
   }) {
     _sub?.cancel();
-    final stream = asPoster
-        ? _applications.watchForPoster(gigId, uid)
-        : _applications.watchMine(gigId, uid);
-    _sub = stream.listen(
-      (applications) => emit(GigApplicationsState(applications: applications)),
-      onError: (Object error) => emit(GigApplicationsState(error: '$error')),
-    );
+    _sub = _applications
+        .watchByGig(gigId, viewerId: viewerId, viewerIsPoster: viewerIsPoster)
+        .listen(
+          (applications) =>
+              emit(GigApplicationsState(applications: applications)),
+          onError: (_) => emit(
+            const GigApplicationsState(error: 'Could not load applications.'),
+          ),
+        );
   }
 
   Future<void> apply({
@@ -62,9 +64,12 @@ class GigApplicationsCubit extends Cubit<GigApplicationsState> {
         ),
       );
       rethrow;
-    } catch (error) {
+    } catch (_) {
       emit(
-        GigApplicationsState(applications: state.applications, error: '$error'),
+        GigApplicationsState(
+          applications: state.applications,
+          error: 'Could not apply.',
+        ),
       );
       rethrow;
     }
@@ -73,9 +78,12 @@ class GigApplicationsCubit extends Cubit<GigApplicationsState> {
   Future<void> setStatus(String applicationId, ApplicationStatus status) async {
     try {
       await _applications.setStatus(applicationId, status);
-    } catch (error) {
+    } catch (_) {
       emit(
-        GigApplicationsState(applications: state.applications, error: '$error'),
+        GigApplicationsState(
+          applications: state.applications,
+          error: 'Could not update the application.',
+        ),
       );
       rethrow;
     }

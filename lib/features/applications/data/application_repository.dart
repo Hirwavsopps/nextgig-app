@@ -17,20 +17,18 @@ class ApplicationRepository {
         .map(_map);
   }
 
-  Stream<List<GigApplication>> watchForPoster(String gigId, String posterId) {
+  /// The poster sees every application on their gig; anyone else sees only
+  /// their own. The filter has to be part of the query because Firestore
+  /// rejects queries that could return documents the user cannot read.
+  Stream<List<GigApplication>> watchByGig(
+    String gigId, {
+    required String viewerId,
+    required bool viewerIsPoster,
+  }) {
     return _apps
         .where('gigId', isEqualTo: gigId)
-        .where('posterId', isEqualTo: posterId)
+        .where(viewerIsPoster ? 'posterId' : 'applicantId', isEqualTo: viewerId)
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(_map);
-  }
-
-  /// The signed-in applicant's own row on this gig. No order: one row is enough.
-  Stream<List<GigApplication>> watchMine(String gigId, String applicantId) {
-    return _apps
-        .where('gigId', isEqualTo: gigId)
-        .where('applicantId', isEqualTo: applicantId)
         .snapshots()
         .map(_map);
   }
