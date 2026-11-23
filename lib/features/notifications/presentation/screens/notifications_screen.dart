@@ -5,6 +5,7 @@ import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/widgets/empty_view.dart';
 import 'package:nextgig/core/widgets/error_view.dart';
 import 'package:nextgig/core/widgets/loading_view.dart';
+
 import '../cubit/notifications_cubit.dart';
 import '../cubit/notifications_state.dart';
 import '../widgets/notification_tile.dart';

@@ -63,7 +63,7 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<WatchGigs>(() => WatchGigs(sl()));
   sl.registerFactory<GigFeedCubit>(() => GigFeedCubit(sl()));
 
-    // Feature: notifications
+  // Feature: notifications
   sl.registerLazySingleton<NotificationRemoteDataSource>(
     () => NotificationRemoteDataSource(sl()),
   );
@@ -71,8 +71,12 @@ Future<void> configureDependencies() async {
     () => NotificationRepositoryImpl(sl(), sl()), // (remote, FirebaseAuth)
   );
   sl.registerLazySingleton<WatchNotifications>(() => WatchNotifications(sl()));
-  sl.registerLazySingleton<MarkNotificationRead>(() => MarkNotificationRead(sl()));
-  sl.registerLazySingleton<MarkAllNotificationsRead>(() => MarkAllNotificationsRead(sl()));
+  sl.registerLazySingleton<MarkNotificationRead>(
+    () => MarkNotificationRead(sl()),
+  );
+  sl.registerLazySingleton<MarkAllNotificationsRead>(
+    () => MarkAllNotificationsRead(sl()),
+  );
   sl.registerLazySingleton<DeleteNotification>(() => DeleteNotification(sl()));
   sl.registerLazySingleton<SendNotification>(() => SendNotification(sl()));
 

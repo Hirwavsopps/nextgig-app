@@ -7,6 +7,7 @@ import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/utils/messenger.dart';
 import 'package:nextgig/core/widgets/skill_chip.dart';
+import 'package:nextgig/core/widgets/user_avatar.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/auth/presentation/widgets/account_section.dart';
 import 'package:nextgig/features/profile/domain/entities/skill.dart';
@@ -85,13 +86,9 @@ class _ProfileView extends StatelessWidget {
                 )
               else
                 ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: (profile?.photoUrl.isNotEmpty ?? false)
-                        ? NetworkImage(profile!.photoUrl)
-                        : null,
-                    child: (profile?.photoUrl.isEmpty ?? true)
-                        ? const Icon(Icons.person)
-                        : null,
+                  leading: UserAvatar(
+                    name: profile?.name ?? '',
+                    photoUrl: profile?.photoUrl,
                   ),
                   title: Text(
                     profile?.name.isEmpty ?? true

@@ -73,9 +73,9 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-  path: AppRoutes.notifications,
-  builder: (context, state) => const NotificationsScreen(),
-),
+      path: AppRoutes.notifications,
+      builder: (context, state) => const NotificationsScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           MainShell(navigationShell: navigationShell),

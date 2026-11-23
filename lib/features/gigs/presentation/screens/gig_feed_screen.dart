@@ -13,6 +13,7 @@ import 'package:nextgig/core/widgets/loading_view.dart';
 import 'package:nextgig/core/l10n/app_strings.dart';
 import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/widgets/pill.dart';
+import 'package:nextgig/core/widgets/user_avatar.dart';
 import 'package:nextgig/features/matching/domain/recommend_gigs.dart';
 import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
@@ -212,13 +213,12 @@ class _FeedHeader extends StatelessWidget {
                   );
                 },
               ),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: scheme.surfaceContainerHighest,
-                child: Icon(
-                  Icons.person_outline,
-                  size: 20,
-                  color: scheme.onSurface,
+              BlocBuilder<ProfileCubit, ProfileState>(
+                buildWhen: (prev, curr) => prev.profile != curr.profile,
+                builder: (context, state) => UserAvatar(
+                  name: state.profile?.name ?? '',
+                  photoUrl: state.profile?.photoUrl,
+                  radius: 18,
                 ),
               ),
             ],

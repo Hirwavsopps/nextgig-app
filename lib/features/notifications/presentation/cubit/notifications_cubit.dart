@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/usecases/notification_usecases.dart';
 import 'notifications_state.dart';
 
@@ -53,8 +55,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<void> markRead(String id) async {
     try {
       await _markRead(id);
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> markAllRead() async {
