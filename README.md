@@ -44,6 +44,28 @@ Running it again overwrites the same records. Three accounts share the password 
 2. Sign in as `poster@nextgig.dev`. Open that gig, tap **Review applicants**, and set the application to shortlisted.
 3. Sign in as `talent@nextgig.dev`. Mentors shows David. Send him a message and open it under Messages.
 4. Sign in as `mentor@nextgig.dev`. Reply in that thread. Open Aline's profile and confirm Flutter is verified.
+5. Sign in as `talent@nextgig.dev`. Profile → **Verify skills** → Figma → **Upload evidence**, pick a PDF/JPG/PNG under 5 MB and send it. Figma shows **Pending**.
+6. Sign in as `mentor@nextgig.dev`. Profile → **Endorsement queue** → open Figma, add a comment and tap **Endorse**. Aline's Figma now shows **Verified** with David's name and the date.
+7. Sign in as `poster@nextgig.dev`. Open *Build a landing page for a salon* → **Review applicants** → **Leave a review** on Aline's completed application.
+
+### Skill verification reviewers
+Only accounts listed in the `reviewers` collection can approve or reject evidence. Signing up as a mentor is not enough. The app cannot write this collection, so add a reviewer in the Firebase Console (Firestore → `reviewers` → document id = the person's Auth uid) with:
+
+| Field | Value |
+|---|---|
+| `name` | Display name shown on endorsements; must match what the reviewer signs with |
+| `relationship` | `mentor`, `lecturer` or `client` |
+| `title`, `organization` | Optional text |
+| `active` | `true` (set `false` to revoke) |
+
+The seed command adds David as a reviewer and resets Aline's Figma skill to Unverified, so the demo can be repeated.
+
+### Security rules tests
+`tool/rules-tests` runs the Firestore and Storage rules against the emulators (needs Java and the Firebase CLI):
+
+```bash
+cd tool/rules-tests && npm install && npm test
+```
 
 ## Quality checks
 ```
@@ -61,4 +83,4 @@ flutter test --coverage
 _Add screenshots of each screen here._
 
 ## Known limitations and future work
-Payment is a recorded amount plus a mobile-money reference. A live MTN MoMo or Airtel Money charge is not integrated. Messages are text only. A skill becomes verified when a different signed-in user endorses it. The sample mentor endorsement is written by the seed command.
+Payment is a recorded amount plus a mobile-money reference. A live MTN MoMo or Airtel Money charge is not integrated. Messages are text only. A skill becomes verified only when an authorized reviewer (listed in `reviewers`) approves the evidence; reviewers are added by the project owner, not by the app.

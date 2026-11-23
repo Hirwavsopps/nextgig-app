@@ -28,4 +28,17 @@ class AppRoutes {
   static const notifications = '/notifications';
   static const String userPattern = '/user/:uid';
   static String user(String uid) => '/user/$uid';
+
+  // Skill verification and reviews (Member 4).
+  static const String verification = '/verification';
+  static const String verificationQueue = '/verification/queue';
+  static const String verificationSkillPattern = '/verification/skill/:skillId';
+  static String verificationSkill(String skillId) =>
+      '/verification/skill/$skillId';
+  static String verificationUpload(String skillId) =>
+      '/verification/skill/$skillId/upload';
+  static const String verificationRequestPattern = '/verification/request/:id';
+  static String verificationRequest(String id) => '/verification/request/$id';
+  static const String reviewFormPattern = '/review/:applicationId';
+  static String reviewForm(String applicationId) => '/review/$applicationId';
 }

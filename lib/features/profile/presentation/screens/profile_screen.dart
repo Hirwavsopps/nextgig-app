@@ -7,13 +7,17 @@ import 'package:nextgig/core/l10n/app_strings.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/utils/messenger.dart';
-import 'package:nextgig/core/widgets/skill_chip.dart';
 import 'package:nextgig/core/widgets/user_avatar.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/auth/presentation/widgets/account_section.dart';
 import 'package:nextgig/features/profile/domain/entities/skill.dart';
 import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:nextgig/features/profile/presentation/widgets/cv_card.dart';
+import 'package:nextgig/features/reviews/presentation/widgets/profile_reviews_section.dart';
+import 'package:nextgig/features/verification/domain/entities/verification_status.dart';
+import 'package:nextgig/features/verification/presentation/cubit/verification_queue_cubit.dart';
+import 'package:nextgig/features/verification/presentation/widgets/verification_badge.dart';
+import 'package:nextgig/features/verification/presentation/widgets/verification_widgets.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, this.uid});
@@ -27,8 +31,15 @@ class ProfileScreen extends StatelessWidget {
     final profileUid = uid ?? me?.uid;
     if (profileUid == null) return const SizedBox.shrink();
     final mine = profileUid == me?.uid;
-    return BlocProvider(
-      create: (_) => sl<ProfileCubit>()..watch(profileUid),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<ProfileCubit>()..watch(profileUid)),
+        // Whether the viewer may endorse skills; drives the reviewer actions.
+        if (me != null)
+          BlocProvider(
+            create: (_) => sl<VerificationQueueCubit>()..watch(me.uid),
+          ),
+      ],
       child: _ProfileView(uid: profileUid, mine: mine),
     );
   }
@@ -118,21 +129,31 @@ class _ProfileView extends StatelessWidget {
                 CvCard(profile: profile, mine: mine),
               ],
               const SizedBox(height: 16),
-              Text(t('skills'), style: Theme.of(context).textTheme.titleMedium),
+              const _ReviewerEntry(),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t('skills'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (mine && state.skills.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () => context.push(AppRoutes.verification),
+                      icon: const Icon(Icons.verified_outlined, size: 18),
+                      label: const Text('Verify skills'),
+                    ),
+                ],
+              ),
               if (state.skills.isEmpty) const Text('No skills yet.'),
               for (final skill in state.skills)
                 _SkillTile(skill: skill, uid: uid, mine: mine),
               const SizedBox(height: 16),
-              Text(
-                t('reviews'),
-                style: Theme.of(context).textTheme.titleMedium,
+              ProfileReviewsSection(
+                title: t('reviews'),
+                reviews: state.reviews,
               ),
-              if (state.reviews.isEmpty) const Text('No reviews yet.'),
-              for (final review in state.reviews)
-                ListTile(
-                  title: Text('${review.rating}/5'),
-                  subtitle: Text(review.comment),
-                ),
               if (mine) ...[
                 const SizedBox(height: 8),
                 OutlinedButton(
@@ -174,12 +195,32 @@ class _SkillTile extends StatelessWidget {
       children: [
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: SkillChip(label: skill.name, verified: skill.verified),
-          subtitle: Text(skill.proficiency),
+          title: Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(skill.name),
+              VerificationBadge(status: skill.status),
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(skill.proficiency),
+              if (skill.isVerified) VerifiedByLine(skill: skill),
+            ],
+          ),
           trailing: mine
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      tooltip: 'Verification',
+                      onPressed: () =>
+                          context.push(AppRoutes.verificationSkill(skill.id)),
+                      icon: const Icon(Icons.verified_outlined),
+                    ),
                     IconButton(
                       onPressed: () =>
                           context.push(AppRoutes.skillForm, extra: skill),
@@ -194,10 +235,7 @@ class _SkillTile extends StatelessWidget {
                     ),
                   ],
                 )
-              : TextButton(
-                  onPressed: () => _endorse(context),
-                  child: const Text('Endorse'),
-                ),
+              : _ReviewAction(skill: skill),
         ),
         for (final item in portfolio) ...[
           if (item.title.trim().isNotEmpty)
@@ -243,71 +281,53 @@ class _SkillTile extends StatelessWidget {
       if (context.mounted) showAppMessage(context, 'Could not open the file.');
     }
   }
+}
 
-  Future<void> _endorse(BuildContext context) async {
-    final me = context.read<AuthCubit>().state.user;
-    if (me == null) return;
-    var relationship = 'mentor';
-    final note = TextEditingController();
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text('Endorse ${skill.name}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: relationship,
-                items: const [
-                  DropdownMenuItem(value: 'mentor', child: Text('Mentor')),
-                  DropdownMenuItem(value: 'lecturer', child: Text('Lecturer')),
-                  DropdownMenuItem(value: 'client', child: Text('Past client')),
-                ],
-                onChanged: (value) {
-                  if (value != null) relationship = value;
-                },
-              ),
-              TextField(
-                controller: note,
-                decoration: const InputDecoration(labelText: 'Note'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Endorse'),
-            ),
-          ],
-        );
-      },
+/// Shown to authorized reviewers only: a shortcut to their queue.
+class _ReviewerEntry extends StatelessWidget {
+  const _ReviewerEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    final queue = context.watch<VerificationQueueCubit?>()?.state;
+    if (queue == null || !queue.isReviewer) return const SizedBox.shrink();
+    final waiting = queue.pending.length;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: ListTile(
+        leading: const Icon(Icons.fact_check_outlined),
+        title: const Text('Endorsement queue'),
+        subtitle: Text(
+          waiting == 0
+              ? 'No skills waiting for you'
+              : '$waiting skill${waiting == 1 ? '' : 's'} waiting for review',
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(AppRoutes.verificationQueue),
+      ),
     );
-    if (saved != true || !context.mounted) {
-      note.dispose();
-      return;
+  }
+}
+
+/// On someone else's profile, reviewers can open a pending skill's evidence.
+class _ReviewAction extends StatelessWidget {
+  const _ReviewAction({required this.skill});
+
+  final Skill skill;
+
+  @override
+  Widget build(BuildContext context) {
+    final queue = context.watch<VerificationQueueCubit?>()?.state;
+    final requestId = skill.verificationId;
+    if (queue == null ||
+        !queue.isReviewer ||
+        skill.status != VerificationStatus.pending ||
+        requestId == null) {
+      return const SizedBox.shrink();
     }
-    try {
-      await context.read<ProfileCubit>().endorse(
-        ownerId: uid,
-        skillId: skill.id,
-        endorserId: me.uid,
-        endorserName: me.name.isEmpty ? me.email : me.name,
-        relationship: relationship,
-        note: note.text,
-      );
-      if (context.mounted) showAppMessage(context, 'Skill verified.');
-    } on StateError catch (error) {
-      if (context.mounted) showAppMessage(context, error.message);
-    } catch (_) {
-      if (context.mounted) {
-        showAppMessage(context, 'Could not endorse this skill.');
-      }
-    }
-    note.dispose();
+    return TextButton(
+      onPressed: () => context.push(AppRoutes.verificationRequest(requestId)),
+      child: const Text('Review'),
+    );
   }
 }

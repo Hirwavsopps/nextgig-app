@@ -41,3 +41,22 @@ String timeAgo(DateTime time, {DateTime? now}) {
   }
   return '${difference.inDays}d ago';
 }
+
+const _months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/// e.g. "12 Nov 2026".
+String formatDate(DateTime time) =>
+    '${time.day} ${_months[time.month - 1]} ${time.year}';

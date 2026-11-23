@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+/// A client's rating of the talent they hired (reviews/{applicationId}).
+/// [reviewerId] is the client, [revieweeId] the student.
 class Review extends Equatable {
   const Review({
     required this.id,
@@ -9,6 +11,7 @@ class Review extends Equatable {
     required this.revieweeId,
     required this.rating,
     required this.comment,
+    this.reviewerName = '',
     this.createdAt,
   });
 
@@ -19,6 +22,7 @@ class Review extends Equatable {
   final String revieweeId;
   final int rating;
   final String comment;
+  final String reviewerName;
   final DateTime? createdAt;
 
   @override
@@ -30,6 +34,7 @@ class Review extends Equatable {
     revieweeId,
     rating,
     comment,
+    reviewerName,
     createdAt,
   ];
 }

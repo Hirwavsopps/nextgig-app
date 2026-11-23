@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nextgig/features/applications/data/application_repository.dart';
 import 'package:nextgig/features/applications/domain/entities/gig_application.dart';
-import 'package:nextgig/features/reviews/data/review_repository.dart';
+import 'package:nextgig/features/reviews/domain/repositories/review_repository.dart';
 
 class GigApplicationsState extends Equatable {
   const GigApplicationsState({this.applications = const [], this.error});

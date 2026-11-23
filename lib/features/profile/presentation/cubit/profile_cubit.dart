@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nextgig/features/profile/data/profile_repository.dart';
 import 'package:nextgig/features/profile/domain/entities/skill.dart';
 import 'package:nextgig/features/profile/domain/entities/user_profile.dart';
-import 'package:nextgig/features/reviews/data/review_repository.dart';
+import 'package:nextgig/features/reviews/domain/repositories/review_repository.dart';
 import 'package:nextgig/features/reviews/domain/entities/review.dart';
 
 class ProfileState extends Equatable {
@@ -105,31 +105,6 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> deleteSkill(String uid, String skillId) async {
     try {
       await _profiles.deleteSkill(uid, skillId);
-    } catch (error) {
-      _fail(error);
-      rethrow;
-    }
-  }
-
-  Future<void> endorse({
-    required String ownerId,
-    required String skillId,
-    required String endorserId,
-    required String endorserName,
-    required String relationship,
-    required String note,
-  }) async {
-    try {
-      await _profiles.endorse(
-        ownerId: ownerId,
-        skillId: skillId,
-        endorserId: endorserId,
-        endorserName: endorserName,
-        relationship: relationship,
-        note: note,
-      );
-    } on StateError {
-      rethrow;
     } catch (error) {
       _fail(error);
       rethrow;

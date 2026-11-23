@@ -65,8 +65,11 @@ class ProfileRepository {
         .map((snapshot) => snapshot.docs.map(_skillFromDoc).toList());
   }
 
+  /// Creates or edits a skill. The verification fields are never sent from
+  /// here: a new skill starts unverified, and an edit leaves them untouched
+  /// (only a reviewer may change them, see firestore.rules).
   Future<String> saveSkill(String uid, Skill skill) async {
-    final data = {
+    final data = <String, dynamic>{
       'name': skill.name.trim(),
       'proficiency': skill.proficiency,
       'portfolio': [
@@ -80,50 +83,28 @@ class ProfileRepository {
       ],
       'proofUrl': skill.proofUrl,
       'proofStoragePath': skill.proofStoragePath,
-      'verified': skill.id.isEmpty ? false : skill.verified,
     };
-    final ref = skill.id.isEmpty
-        ? _skills(uid).doc()
-        : _skills(uid).doc(skill.id);
-    await ref.set(data);
+    if (skill.id.isEmpty) {
+      final ref = _skills(uid).doc();
+      await ref.set({
+        ...data,
+        'verified': false,
+        'verificationStatus': 'unverified',
+      });
+      return ref.id;
+    }
+    final ref = _skills(uid).doc(skill.id);
+    await ref.set(data, SetOptions(merge: true));
     return ref.id;
   }
 
   Future<void> deleteSkill(String uid, String skillId) =>
       _skills(uid).doc(skillId).delete();
 
-  /// Writes an endorsement and marks the skill verified in one batch.
-  /// The owner cannot endorse themselves; Firestore rules reject that.
-  Future<void> endorse({
-    required String ownerId,
-    required String skillId,
-    required String endorserId,
-    required String endorserName,
-    required String relationship,
-    required String note,
-  }) async {
-    final skillRef = _skills(ownerId).doc(skillId);
-    // The endorser's uid is the document id, so each person can endorse a
-    // skill once and the rules can check that a real endorsement exists.
-    final endorsementRef = skillRef.collection('endorsements').doc(endorserId);
-    if ((await endorsementRef.get()).exists) {
-      throw StateError('You have already endorsed this skill.');
-    }
-    final batch = _firestore.batch();
-    batch.set(endorsementRef, {
-      'endorserId': endorserId,
-      'endorserName': endorserName,
-      'relationship': relationship,
-      'note': note.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    batch.update(skillRef, {'verified': true});
-    await batch.commit();
-  }
-
   Skill _skillFromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final portfolio = data['portfolio'] as List<dynamic>? ?? const [];
+    final verifiedAt = data['verifiedAt'];
     return Skill(
       id: doc.id,
       name: data['name'] as String? ?? '',
@@ -140,6 +121,12 @@ class ProfileRepository {
       proofUrl: data['proofUrl'] as String?,
       proofStoragePath: data['proofStoragePath'] as String?,
       verified: data['verified'] as bool? ?? false,
+      verificationStatus: data['verificationStatus'] as String?,
+      verificationId: data['verificationId'] as String?,
+      verifiedAt: verifiedAt is Timestamp ? verifiedAt.toDate() : null,
+      verifiedById: data['verifiedById'] as String?,
+      verifiedByName: data['verifiedByName'] as String? ?? '',
+      verifiedByRelationship: data['verifiedByRelationship'] as String? ?? '',
     );
   }
 }

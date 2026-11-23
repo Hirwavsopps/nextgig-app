@@ -255,9 +255,16 @@ class _ApplicantRow extends StatelessWidget {
             },
           ),
           if (application.status == ApplicationStatus.completed)
-            TextButton(
-              onPressed: () => _review(context),
-              child: const Text('Leave a review'),
+            TextButton.icon(
+              onPressed: () => _closeAnd(
+                context,
+                () => host.push(
+                  AppRoutes.reviewForm(application.id),
+                  extra: application,
+                ),
+              ),
+              icon: const Icon(Icons.star_outline_rounded),
+              label: const Text('Leave a review'),
             ),
         ],
       ),
@@ -274,66 +281,5 @@ class _ApplicantRow extends StatelessWidget {
         status,
       );
     } catch (_) {}
-  }
-
-  Future<void> _review(BuildContext context) async {
-    var rating = 5;
-    final comment = TextEditingController();
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Review'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<int>(
-              initialValue: rating,
-              items: [
-                for (var value = 1; value <= 5; value++)
-                  DropdownMenuItem(value: value, child: Text('$value')),
-              ],
-              onChanged: (value) {
-                if (value != null) rating = value;
-              },
-            ),
-            TextField(
-              controller: comment,
-              decoration: const InputDecoration(labelText: 'Comment'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    if (saved != true || !context.mounted) {
-      comment.dispose();
-      return;
-    }
-    final me = context.read<AuthCubit>().state.user;
-    if (me == null) {
-      comment.dispose();
-      return;
-    }
-    try {
-      await context.read<GigApplicationsCubit>().review(
-        applicationId: application.id,
-        gigId: gig.id,
-        reviewerId: me.uid,
-        revieweeId: application.applicantId,
-        rating: rating,
-        comment: comment.text,
-      );
-      if (context.mounted) showAppMessage(context, 'Review saved.');
-    } catch (_) {}
-    comment.dispose();
   }
 }
