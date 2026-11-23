@@ -200,11 +200,7 @@ class _FeedHeader extends StatelessWidget {
                 builder: (context, saved) {
                   return IconButton(
                     tooltip: 'Saved gigs',
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${saved.length} saved gigs')),
-                      );
-                    },
+                    onPressed: () => context.push(AppRoutes.saved),
                     icon: Badge(
                       isLabelVisible: saved.isNotEmpty,
                       label: Text('${saved.length}'),

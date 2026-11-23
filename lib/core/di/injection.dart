@@ -20,7 +20,9 @@ import 'package:nextgig/features/auth/data/repositories/auth_repository_impl.dar
 import 'package:nextgig/features/auth/domain/repositories/auth_repository.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/gigs/data/datasources/gig_remote_data_source.dart';
+import 'package:nextgig/features/gigs/data/repositories/bookmark_repository_impl.dart';
 import 'package:nextgig/features/gigs/data/repositories/gig_repository_impl.dart';
+import 'package:nextgig/features/gigs/domain/repositories/bookmark_repository.dart';
 import 'package:nextgig/features/gigs/domain/repositories/gig_repository.dart';
 import 'package:nextgig/features/gigs/domain/usecases/watch_gigs.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
@@ -59,7 +61,15 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
   sl.registerLazySingleton<ProofUploader>(() => ProofUploader(sl()));
   sl.registerLazySingleton<CvUploader>(() => CvUploader(sl()));
-  sl.registerLazySingleton<BookmarksCubit>(() => BookmarksCubit());
+  sl.registerLazySingleton<BookmarkRepository>(
+    () => BookmarkRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<BookmarksCubit>(
+    () => BookmarksCubit(
+      store: sl(),
+      userIds: sl<FirebaseAuth>().authStateChanges().map((user) => user?.uid),
+    ),
+  );
 
   // Feature: auth
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);

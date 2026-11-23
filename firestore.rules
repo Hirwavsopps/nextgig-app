@@ -52,6 +52,13 @@ service cloud.firestore {
         }
       }
 
+      // Saved gigs are private; the document id is the gig id.
+      match /bookmarks/{gigId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.gigId == gigId;
+      }
+
       // Earnings are private to their owner.
       match /earnings/{earningId} {
         allow read, create, update, delete: if isOwner(uid);

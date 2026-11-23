@@ -12,6 +12,8 @@ erDiagram
     USERS ||--o{ ENDORSEMENTS : "gives (endorserId)"
     USERS ||--o{ EARNINGS : "records (subcollection)"
     USERS ||--o{ NOTIFICATIONS : "receives (subcollection)"
+    USERS ||--o{ BOOKMARKS : "saves (subcollection)"
+    GIGS ||--o{ BOOKMARKS : "saved as (doc id = gigId)"
     USERS ||--o{ GIGS : "posts (posterId)"
     GIGS ||--o{ APPLICATIONS : "receives (gigId)"
     USERS ||--o{ APPLICATIONS : "applies (applicantId)"
@@ -61,6 +63,10 @@ erDiagram
         string gigTitle
         string gigId FK "optional, gigs"
         string mobileMoneyRef "MoMo or Airtel reference"
+        timestamp createdAt
+    }
+    BOOKMARKS {
+        string gigId PK "doc id = gig id, FK gigs"
         timestamp createdAt
     }
     NOTIFICATIONS {
@@ -194,6 +200,13 @@ erDiagram
 | mobileMoneyRef | string | MoMo or Airtel reference |
 | createdAt | timestamp | |
 
+### users/{uid}/bookmarks/{gigId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK** and **FK** to gigs: the saved gig's id, so a gig is saved at most once |
+| gigId | string | same as the doc id |
+| createdAt | timestamp | |
+
 ### users/{uid}/notifications/{notificationId}
 | Field | Type | Notes |
 |---|---|---|
@@ -298,6 +311,7 @@ Mentors are not a separate collection: the dashboard groups open gigs by their `
 | skill → endorsements | 1 to many | subcollection, doc id = endorser uid |
 | user → endorsements given | 1 to many | `endorserId` |
 | user → earnings | 1 to many | subcollection `users/{uid}/earnings` |
+| user → bookmarks | 1 to many | subcollection `users/{uid}/bookmarks`, doc id = gig id |
 | user → notifications | 1 to many | subcollection `users/{uid}/notifications`, `senderId` links the sender |
 | user → gigs posted | 1 to many | `gigs.posterId` |
 | gig → applications | 1 to many | `applications.gigId` |
@@ -321,7 +335,6 @@ Mentors are not a separate collection: the dashboard groups open gigs by their `
 | Data | Where |
 |---|---|
 | theme, language (`en` / `rw`), preferred gig category | SharedPreferences |
-| bookmarked gig ids | in memory for the current session |
 
 ## Composite indexes (firestore.indexes.json)
 | Collection | Fields | Used by |

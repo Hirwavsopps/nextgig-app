@@ -20,6 +20,7 @@ class AppRoutes {
   static const String gigDetailPattern = '/gig/:id';
   static String gigDetail(String id) => '/gig/$id';
 
+  static const String saved = '/saved';
   static const String chatPattern = '/chat/:id';
   static String chat(String conversationId) => '/chat/$conversationId';
 
