@@ -22,8 +22,28 @@ lib/
 4. Run on an emulator or a physical device: `flutter run`.
 5. Picture uploads use an unsigned Cloudinary preset:
    `flutter run --dart-define=CLOUDINARY_CLOUD_NAME=your_cloud --dart-define=CLOUDINARY_UPLOAD_PRESET=your_preset`
-6. After signing in, Settings has **Load sample data**. It writes gigs only when the collection is empty, then skills, an application, a review, and earnings for the signed-in user.
-7. Deploy rules when you are ready: `firebase deploy --only firestore:rules,firestore:indexes,storage`. The files are `firestore.rules`, `firestore.indexes.json`, and `storage.rules`.
+6. Deploy rules before seeding or signing in against a new project: `firebase deploy --only firestore:rules,firestore:indexes,storage`. The files are `firestore.rules`, `firestore.indexes.json`, and `storage.rules`.
+7. Seed sample users from a command. The project Owner downloads a service account key (Project settings → Service accounts → Generate new private key). Do not commit that file.
+
+```bash
+cd tool && npm install
+export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+node seed.mjs
+```
+
+Running it again overwrites the same records. Three accounts share the password `Nextgig1!`:
+
+| Email | Signs in as |
+|---|---|
+| `talent@nextgig.dev` | Aline, who can apply to gigs she does not own |
+| `poster@nextgig.dev` | Eric, who owns the sample gigs |
+| `mentor@nextgig.dev` | David, listed on the Mentors tab |
+
+### Manual test
+1. Sign in as `talent@nextgig.dev`. Home shows the poster's gigs. Open one that is not already applied, tap **Apply now**, then find it under Gigs → Applications.
+2. Sign in as `poster@nextgig.dev`. Open that gig, tap **Review applicants**, and set the application to shortlisted.
+3. Sign in as `talent@nextgig.dev`. Mentors shows David. Send him a message and open it under Messages.
+4. Sign in as `mentor@nextgig.dev`. Reply in that thread. Open Aline's profile and confirm Flutter is verified.
 
 ## Quality checks
 ```
@@ -41,4 +61,4 @@ flutter test --coverage
 _Add screenshots of each screen here._
 
 ## Known limitations and future work
-Payment is a recorded amount plus a mobile-money reference. A live MTN MoMo or Airtel Money charge is not integrated. Mentors and messages are still placeholders. Sample gigs are owned by the account that loads them, because security rules only allow a user to create their own posts. A skill becomes verified when a different signed-in user endorses it.
+Payment is a recorded amount plus a mobile-money reference. A live MTN MoMo or Airtel Money charge is not integrated. Messages are text only. A skill becomes verified when a different signed-in user endorses it. The sample mentor endorsement is written by the seed command.

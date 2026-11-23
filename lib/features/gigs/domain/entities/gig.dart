@@ -19,6 +19,7 @@ class Gig extends Equatable {
     this.escrowFunded = false,
     this.deliverables = const [],
     this.mentorName,
+    this.mentorId,
     this.imageUrl,
     this.createdAt,
     this.deadline,
@@ -53,6 +54,9 @@ class Gig extends Equatable {
   final List<String> deliverables;
   final String? mentorName;
 
+  /// Firebase Auth uid of the mentor on this gig, when one is attached.
+  final String? mentorId;
+
   /// Cloudinary image URL.
   final String? imageUrl;
   final DateTime? createdAt;
@@ -78,6 +82,7 @@ class Gig extends Equatable {
     escrowFunded,
     deliverables,
     mentorName,
+    mentorId,
     imageUrl,
     createdAt,
     deadline,

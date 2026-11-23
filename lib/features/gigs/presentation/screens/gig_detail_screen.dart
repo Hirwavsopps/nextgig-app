@@ -176,6 +176,20 @@ class GigDetailScreen extends StatelessWidget {
             if (mentor != null) ...[
               const _SectionTitle('Mentorship partner'),
               MentorTile(name: mentor, caption: 'Included 1-on-1'),
+              if (gig.mentorId != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => startChat(
+                      context,
+                      otherUid: gig.mentorId!,
+                      otherName: mentor,
+                      gigId: gig.id,
+                      gigTitle: gig.title,
+                    ),
+                    child: const Text('Message mentor'),
+                  ),
+                ),
             ],
           ],
         ),
