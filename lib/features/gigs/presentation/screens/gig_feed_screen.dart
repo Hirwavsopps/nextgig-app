@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nextgig/core/constants/app_constants.dart';
+import 'package:nextgig/core/constants/app_images.dart';
 import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import 'package:nextgig/core/widgets/gig_card.dart';
 import 'package:nextgig/core/widgets/loading_view.dart';
 import 'package:nextgig/core/l10n/app_strings.dart';
 import 'package:nextgig/core/settings/settings_cubit.dart';
+import 'package:nextgig/core/widgets/photo_banner.dart';
 import 'package:nextgig/core/widgets/pill.dart';
 import 'package:nextgig/core/widgets/user_avatar.dart';
 import 'package:nextgig/features/matching/domain/recommend_gigs.dart';
@@ -220,25 +222,38 @@ class _FeedHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Row(
-            children: [
-              Pill(label: 'Live in Kigali', dot: true),
-              SizedBox(width: 8),
-              Pill(label: 'Verified talent', icon: Icons.verified_outlined),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Muraho \u{1F44B}',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '$count ${count == 1 ? 'gig' : 'gigs'} available in Kigali today',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
+          PhotoBanner(
+            asset: AppImages.kigaliHills,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Pill(label: 'Live in Kigali', dot: true),
+                    SizedBox(width: 8),
+                    Pill(
+                      label: 'Verified talent',
+                      icon: Icons.verified_outlined,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  'Muraho \u{1F44B}',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$count ${count == 1 ? 'gig' : 'gigs'} available in Kigali '
+                  'today',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

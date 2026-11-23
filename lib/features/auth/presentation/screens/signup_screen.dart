@@ -1,9 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nextgig/core/constants/app_images.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/widgets/app_button.dart';
 import 'package:nextgig/core/widgets/app_text_field.dart';
+import 'package:nextgig/core/widgets/photo_banner.dart';
 import 'package:nextgig/core/widgets/pill.dart';
 import 'package:nextgig/features/auth/domain/entities/user_role.dart';
 import 'package:nextgig/features/auth/domain/validators.dart';
@@ -99,6 +101,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         const Spacer(),
                         const Pill(label: 'Rwanda tech & craft', dot: true),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    const PhotoBanner(
+                      asset: AppImages.onboardingMatch,
+                      title: 'Turn your skills into paid work',
+                      subtitle: 'Verified skills, real clients, real mentors',
+                      height: 140,
                     ),
                     const SizedBox(height: 20),
                     Text(
