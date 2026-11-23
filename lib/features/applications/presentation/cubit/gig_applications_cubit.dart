@@ -60,12 +60,9 @@ class GigApplicationsCubit extends Cubit<GigApplicationsState> {
         ),
       );
       rethrow;
-    } catch (_) {
+    } catch (error) {
       emit(
-        GigApplicationsState(
-          applications: state.applications,
-          error: 'Could not apply.',
-        ),
+        GigApplicationsState(applications: state.applications, error: '$error'),
       );
       rethrow;
     }
@@ -74,12 +71,9 @@ class GigApplicationsCubit extends Cubit<GigApplicationsState> {
   Future<void> setStatus(String applicationId, ApplicationStatus status) async {
     try {
       await _applications.setStatus(applicationId, status);
-    } catch (_) {
+    } catch (error) {
       emit(
-        GigApplicationsState(
-          applications: state.applications,
-          error: 'Could not update the application.',
-        ),
+        GigApplicationsState(applications: state.applications, error: '$error'),
       );
       rethrow;
     }

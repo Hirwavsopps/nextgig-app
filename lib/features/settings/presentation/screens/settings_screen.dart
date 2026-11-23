@@ -1,13 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nextgig/core/constants/app_constants.dart';
-import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/l10n/app_strings.dart';
 import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/theme/theme_cubit.dart';
-import 'package:nextgig/core/utils/messenger.dart';
-import 'package:nextgig/core/utils/seed_gigs.dart';
-import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -79,31 +75,8 @@ class SettingsScreen extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OutlinedButton(
-              onPressed: () => _seed(context),
-              child: Text(t('load_sample')),
-            ),
-          ),
         ],
       ),
     );
-  }
-
-  Future<void> _seed(BuildContext context) async {
-    final user = context.read<AuthCubit>().state.user;
-    if (user == null) return;
-    try {
-      await seedDemoData(
-        sl(),
-        uid: user.uid,
-        name: user.name.isEmpty ? 'NextGig user' : user.name,
-      );
-      if (context.mounted) showAppMessage(context, 'Sample data is ready.');
-    } catch (error) {
-      if (context.mounted) showAppMessage(context, '$error');
-    }
   }
 }

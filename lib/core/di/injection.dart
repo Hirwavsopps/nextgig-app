@@ -29,6 +29,11 @@ import 'package:nextgig/features/notifications/data/repositories/notification_re
 import 'package:nextgig/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:nextgig/features/notifications/domain/usecases/notification_usecases.dart';
 import 'package:nextgig/features/notifications/presentation/cubit/notifications_cubit.dart';
+import 'package:nextgig/features/messages/data/message_repository.dart';
+import 'package:nextgig/features/messages/presentation/cubit/inbox_cubit.dart';
+import 'package:nextgig/features/messages/presentation/cubit/thread_cubit.dart';
+import 'package:nextgig/features/mentorship/data/mentor_repository.dart';
+import 'package:nextgig/features/mentorship/presentation/cubit/mentors_cubit.dart';
 
 /// Service locator. Every member registers their own feature's dependencies here
 /// (or in a `registerXFeature()` function called from [configureDependencies]).
@@ -63,7 +68,7 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<WatchGigs>(() => WatchGigs(sl()));
   sl.registerFactory<GigFeedCubit>(() => GigFeedCubit(sl()));
 
-    // Feature: notifications
+  // Feature: notifications
   sl.registerLazySingleton<NotificationRemoteDataSource>(
     () => NotificationRemoteDataSource(sl()),
   );
@@ -71,8 +76,12 @@ Future<void> configureDependencies() async {
     () => NotificationRepositoryImpl(sl(), sl()), // (remote, FirebaseAuth)
   );
   sl.registerLazySingleton<WatchNotifications>(() => WatchNotifications(sl()));
-  sl.registerLazySingleton<MarkNotificationRead>(() => MarkNotificationRead(sl()));
-  sl.registerLazySingleton<MarkAllNotificationsRead>(() => MarkAllNotificationsRead(sl()));
+  sl.registerLazySingleton<MarkNotificationRead>(
+    () => MarkNotificationRead(sl()),
+  );
+  sl.registerLazySingleton<MarkAllNotificationsRead>(
+    () => MarkAllNotificationsRead(sl()),
+  );
   sl.registerLazySingleton<DeleteNotification>(() => DeleteNotification(sl()));
   sl.registerLazySingleton<SendNotification>(() => SendNotification(sl()));
 
@@ -98,4 +107,9 @@ Future<void> configureDependencies() async {
     () => GigApplicationsCubit(sl(), sl()),
   );
   sl.registerFactory<EarningsCubit>(() => EarningsCubit(sl()));
+  sl.registerLazySingleton<MessageRepository>(() => MessageRepository(sl()));
+  sl.registerFactory<InboxCubit>(() => InboxCubit(sl()));
+  sl.registerFactory<ThreadCubit>(() => ThreadCubit(sl()));
+  sl.registerLazySingleton<MentorRepository>(() => MentorRepository(sl()));
+  sl.registerFactory<MentorsCubit>(() => MentorsCubit(sl()));
 }

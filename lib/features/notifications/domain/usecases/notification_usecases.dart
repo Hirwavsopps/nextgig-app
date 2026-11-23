@@ -34,12 +34,11 @@ class SendNotification {
     required String title,
     required String body,
     String? gigId,
-  }) =>
-      _repo.send(
-        toUserId: toUserId,
-        type: type,
-        title: title,
-        body: body,
-        gigId: gigId,
-      );
+  }) => _repo.send(
+    toUserId: toUserId,
+    type: type,
+    title: title,
+    body: body,
+    gigId: gigId,
+  );
 }

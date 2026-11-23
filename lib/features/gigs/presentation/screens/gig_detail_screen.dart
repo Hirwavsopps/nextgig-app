@@ -11,6 +11,7 @@ import 'package:nextgig/core/widgets/skill_chip.dart';
 import 'package:nextgig/features/gigs/domain/entities/gig.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/widgets/gig_apply_bar.dart';
+import 'package:nextgig/features/messages/presentation/open_thread.dart';
 
 /// Gig Detail: the Figma "Gig Detail" screen. The Apply button is wired up
 /// by the applications feature (member 5).
@@ -168,6 +169,19 @@ class GigDetailScreen extends StatelessWidget {
             if (mentor != null) ...[
               const _SectionTitle('Mentorship partner'),
               MentorTile(name: mentor, caption: 'Included 1-on-1'),
+              if (gig.mentorId != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => openThread(
+                      context,
+                      otherId: gig.mentorId!,
+                      otherName: mentor,
+                      gigId: gig.id,
+                    ),
+                    child: const Text('Message mentor'),
+                  ),
+                ),
             ],
           ],
         ),

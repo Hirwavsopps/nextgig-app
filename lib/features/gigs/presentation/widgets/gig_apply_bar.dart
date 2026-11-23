@@ -20,7 +20,7 @@ class GigApplyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.read<AuthCubit>().state.user?.uid;
+    final uid = context.watch<AuthCubit>().state.user?.uid;
     if (uid == null) return const SizedBox.shrink();
     return BlocProvider(
       create: (_) => sl<GigApplicationsCubit>()..watch(gig.id),
@@ -56,14 +56,13 @@ class _ApplyBody extends StatelessWidget {
               color: scheme.surface,
               border: Border(top: BorderSide(color: scheme.outlineVariant)),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isPoster)
-                  for (final application in state.applications)
-                    _PosterRow(gig: gig, application: application)
-                else if (mineApplication == null)
-                  Row(
+            child: isPoster
+                ? AppButton(
+                    label: 'Review applicants',
+                    onPressed: () => _openApplicants(context),
+                  )
+                : mineApplication == null
+                ? Row(
                     children: [
                       Text(
                         formatRwf(gig.pay),
@@ -78,10 +77,17 @@ class _ApplyBody extends StatelessWidget {
                       ),
                     ],
                   )
-                else
-                  _SeekerStatus(gig: gig, application: mineApplication),
-              ],
-            ),
+                : Row(
+                    children: [
+                      Expanded(
+                        child: Text(_statusLabel(mineApplication.status)),
+                      ),
+                      TextButton(
+                        onPressed: () => context.go(AppRoutes.gigs),
+                        child: const Text('View in Gigs'),
+                      ),
+                    ],
+                  ),
           ),
         );
       },
@@ -99,70 +105,103 @@ class _ApplyBody extends StatelessWidget {
         applicantName: user.name.isEmpty ? user.email : user.name,
         posterId: gig.posterId,
       );
-      if (context.mounted) showAppMessage(context, 'Application sent.');
     } catch (_) {}
   }
-}
 
-class _SeekerStatus extends StatelessWidget {
-  const _SeekerStatus({required this.gig, required this.application});
-
-  final Gig gig;
-  final GigApplication application;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('Status: ${application.status.name}'),
-        if (application.status == ApplicationStatus.completed) ...[
-          const SizedBox(height: 8),
-          AppButton(
-            label: AppStrings.text(
-              context.watch<SettingsCubit>().state.language,
-              'record_earnings',
-            ),
-            onPressed: () => context.push(
-              '${AppRoutes.earnings}?gigTitle=${Uri.encodeComponent(gig.title)}&gigId=${gig.id}',
-            ),
-          ),
-        ],
-      ],
+  void _openApplicants(BuildContext context) {
+    final cubit = context.read<GigApplicationsCubit>();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => BlocProvider<GigApplicationsCubit>.value(
+        value: cubit,
+        child: _ApplicantsSheet(gig: gig),
+      ),
     );
   }
 }
 
-class _PosterRow extends StatelessWidget {
-  const _PosterRow({required this.gig, required this.application});
+String _statusLabel(ApplicationStatus status) {
+  final name = status.name;
+  return name[0].toUpperCase() + name.substring(1);
+}
+
+class _ApplicantsSheet extends StatelessWidget {
+  const _ApplicantsSheet({required this.gig});
+
+  final Gig gig;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: BlocBuilder<GigApplicationsCubit, GigApplicationsState>(
+        builder: (context, state) {
+          final applications = state.applications;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Applicants',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                if (applications.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text('No applications yet.'),
+                  )
+                else
+                  for (final application in applications)
+                    _ApplicantRow(gig: gig, application: application),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ApplicantRow extends StatelessWidget {
+  const _ApplicantRow({required this.gig, required this.application});
 
   final Gig gig;
   final GigApplication application;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('${application.applicantName} · ${application.status.name}'),
-        Wrap(
-          spacing: 4,
-          children: [
-            for (final status in ApplicationStatus.values)
-              TextButton(
-                onPressed: status == application.status
-                    ? null
-                    : () => _setStatus(context, status),
-                child: Text(status.name),
-              ),
-          ],
-        ),
-        if (application.status == ApplicationStatus.completed)
-          TextButton(
-            onPressed: () => _review(context),
-            child: const Text('Leave a review'),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(application.applicantName),
+          DropdownButton<ApplicationStatus>(
+            value: application.status,
+            isExpanded: true,
+            items: [
+              for (final status in ApplicationStatus.values)
+                DropdownMenuItem(
+                  value: status,
+                  child: Text(_statusLabel(status)),
+                ),
+            ],
+            onChanged: (status) {
+              if (status == null || status == application.status) return;
+              _setStatus(context, status);
+            },
           ),
-      ],
+          if (application.status == ApplicationStatus.completed)
+            TextButton(
+              onPressed: () => _review(context),
+              child: const Text('Leave a review'),
+            ),
+        ],
+      ),
     );
   }
 
@@ -175,7 +214,6 @@ class _PosterRow extends StatelessWidget {
         application.id,
         status,
       );
-      if (context.mounted) showAppMessage(context, 'Status updated.');
     } catch (_) {}
   }
 
