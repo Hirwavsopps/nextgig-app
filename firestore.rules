@@ -17,6 +17,38 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/applications/$(id)).data;
     }
 
+    // ---- Skill verification -------------------------------------------
+    // Reviewers are listed in reviewers/{uid}, which only the Firebase
+    // Console or the Admin SDK can write. Choosing "mentor" at sign-up does
+    // not make anyone a reviewer.
+    function reviewerPath() {
+      return /databases/$(database)/documents/reviewers/$(request.auth.uid);
+    }
+    function isReviewer() {
+      return signedIn()
+        && exists(reviewerPath())
+        && get(reviewerPath()).data.get('active', false) == true;
+    }
+    function reviewer() {
+      return get(reviewerPath()).data;
+    }
+    function requestAfter(id) {
+      return getAfter(/databases/$(database)/documents/verificationRequests/$(id)).data;
+    }
+    // Fields on a skill that only the verification workflow may change.
+    function verificationKeys() {
+      return ['verified', 'verificationStatus', 'verificationId', 'verifiedAt',
+              'verifiedById', 'verifiedByName', 'verifiedByRelationship'];
+    }
+    function skillStatus(data) {
+      return data.get('verificationStatus', 'unverified');
+    }
+    // Under review or verified: the owner cannot resubmit or rename it.
+    function skillLocked(data) {
+      return skillStatus(data) in ['pending', 'verified']
+        || data.get('verified', false) == true;
+    }
+
     // Profiles are visible to signed-in users so they can be viewed and
     // endorsed. Only the owner writes, and the role cannot change later.
     match /users/{uid} {
@@ -27,27 +59,91 @@ service cloud.firestore {
         && request.resource.data.get('role', null) == resource.data.get('role', null);
       allow delete: if false;
 
-      // The owner manages their skills but can never mark one verified.
+      // The owner manages their skills but can never verify one. Status
+      // fields change only together with a verificationRequests document.
       match /skills/{skillId} {
-        allow read: if signedIn();
-        allow create: if isOwner(uid) && request.resource.data.verified == false;
-        allow delete: if isOwner(uid);
-        allow update: if (isOwner(uid) && unchanged('verified'))
-          || (signedIn()
-              && request.auth.uid != uid
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified'])
-              && request.resource.data.verified == true
-              && existsAfter(/databases/$(database)/documents/users/$(uid)/skills/$(skillId)/endorsements/$(request.auth.uid)));
+        function changed() {
+          return request.resource.data.diff(resource.data).affectedKeys();
+        }
 
-        // Document id is the endorser's uid: one endorsement per person,
-        // no self-endorsement, and endorsements are permanent.
+        // Plain edits: name, proficiency, portfolio. A pending or verified
+        // skill keeps its name, because that is what was endorsed.
+        function ownerEdit() {
+          return isOwner(uid)
+            && !changed().hasAny(verificationKeys())
+            && (!skillLocked(resource.data)
+                || request.resource.data.name == resource.data.name);
+        }
+
+        // Submitting evidence: unverified/rejected -> pending, in the same
+        // batch that creates a new pending request for this skill.
+        function ownerSubmit() {
+          let next = request.resource.data;
+          return isOwner(uid)
+            && changed().hasOnly(['verificationStatus', 'verificationId'])
+            && !skillLocked(resource.data)
+            && next.verificationStatus == 'pending'
+            && !exists(/databases/$(database)/documents/verificationRequests/$(next.verificationId))
+            && requestAfter(next.verificationId).userId == uid
+            && requestAfter(next.verificationId).skillId == skillId
+            && requestAfter(next.verificationId).status == 'pending';
+        }
+
+        // An authorized reviewer (never the owner) decides the current
+        // request, in the same batch that updates that request.
+        function decisionMatches(req, next) {
+          return req.userId == uid
+            && req.skillId == skillId
+            && req.reviewerId == request.auth.uid
+            && req.status == next.verificationStatus;
+        }
+        function reviewerDecision() {
+          let next = request.resource.data;
+          return isReviewer()
+            && request.auth.uid != uid
+            && skillStatus(resource.data) == 'pending'
+            && next.verificationId == resource.data.verificationId
+            && decisionMatches(requestAfter(resource.data.verificationId), next)
+            && ((next.verificationStatus == 'verified'
+                  && changed().hasOnly(verificationKeys())
+                  && next.verified == true
+                  && next.verifiedById == request.auth.uid
+                  && next.verifiedByName == reviewer().name
+                  && next.verifiedByRelationship == reviewer().relationship
+                  && next.verifiedAt == request.time)
+                || (next.verificationStatus == 'rejected'
+                  && changed().hasOnly(['verificationStatus'])));
+        }
+
+        allow read: if signedIn();
+        allow create: if isOwner(uid)
+          && request.resource.data.get('verified', false) == false
+          && skillStatus(request.resource.data) == 'unverified'
+          && !request.resource.data.keys().hasAny(['verificationId', 'verifiedAt',
+               'verifiedById', 'verifiedByName', 'verifiedByRelationship']);
+        allow delete: if isOwner(uid);
+        allow update: if ownerEdit() || ownerSubmit() || reviewerDecision();
+
+        // Written by a reviewer when they approve a request. The document id
+        // is the reviewer's uid, so each reviewer endorses a skill once, and
+        // endorsements are permanent.
         match /endorsements/{endorserId} {
+          function approvedByMe(req) {
+            return req.status == 'verified'
+              && req.reviewerId == request.auth.uid
+              && req.userId == uid
+              && req.skillId == skillId;
+          }
+
           allow read: if signedIn();
-          allow create: if signedIn()
+          allow create: if isReviewer()
             && request.auth.uid != uid
             && endorserId == request.auth.uid
             && request.resource.data.endorserId == request.auth.uid
-            && request.resource.data.relationship in ['mentor', 'lecturer', 'client'];
+            && request.resource.data.endorserName == reviewer().name
+            && request.resource.data.relationship == reviewer().relationship
+            && request.resource.data.createdAt == request.time
+            && approvedByMe(requestAfter(request.resource.data.requestId));
           allow update, delete: if false;
         }
       }
@@ -170,18 +266,100 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.talentId == request.auth.uid;
     }
 
-    // One review per completed application, written by that gig's poster.
+    // Trusted reviewers. Read-only from the app; managed in the Console.
+    match /reviewers/{reviewerId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // One evidence submission for one skill. Private to its owner and to
+    // authorized reviewers, because it links to the uploaded file.
+    match /verificationRequests/{requestId} {
+      function skillOf(data) {
+        return /databases/$(database)/documents/users/$(data.userId)/skills/$(data.skillId);
+      }
+
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isReviewer());
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['userId', 'userName', 'skillId',
+             'skillName', 'evidenceUrl', 'evidenceFileName', 'evidencePath',
+             'evidenceContentType', 'evidenceType', 'note', 'status',
+             'submittedAt', 'reviewerId', 'reviewerName', 'reviewerRelationship',
+             'reviewerComment', 'reviewedAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.userName is string
+        && request.resource.data.userName.size() <= 100
+        && request.resource.data.skillName == get(skillOf(request.resource.data)).data.name
+        && request.resource.data.evidenceUrl is string
+        && request.resource.data.evidenceUrl.size() < 2048
+        && request.resource.data.evidenceFileName is string
+        && request.resource.data.evidenceFileName.size() > 0
+        && request.resource.data.evidenceFileName.size() <= 255
+        && request.resource.data.evidencePath.matches(
+             'verifications/' + request.auth.uid + '/' + requestId + '/[A-Za-z0-9._-]+')
+        && request.resource.data.evidenceContentType in ['application/pdf', 'image/jpeg', 'image/png']
+        && request.resource.data.evidenceType in ['professionalCertificate',
+             'academicCertificate', 'courseCertificate', 'portfolio', 'other']
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 500
+        && request.resource.data.status == 'pending'
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.reviewerId == null
+        && request.resource.data.reviewerName == ''
+        && request.resource.data.reviewerRelationship == ''
+        && request.resource.data.reviewerComment == ''
+        && request.resource.data.reviewedAt == null
+        // The skill moves to pending in the same batch.
+        && getAfter(skillOf(request.resource.data)).data.verificationId == requestId
+        && getAfter(skillOf(request.resource.data)).data.verificationStatus == 'pending';
+
+      // A reviewer decides once: pending -> verified or rejected.
+      allow update: if isReviewer()
+        && request.auth.uid != resource.data.userId
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status',
+             'reviewerId', 'reviewerName', 'reviewerRelationship',
+             'reviewerComment', 'reviewedAt'])
+        && request.resource.data.status in ['verified', 'rejected']
+        && request.resource.data.reviewerId == request.auth.uid
+        && request.resource.data.reviewerName == reviewer().name
+        && request.resource.data.reviewerRelationship == reviewer().relationship
+        && request.resource.data.reviewerComment is string
+        && request.resource.data.reviewerComment.size() >= 3
+        && request.resource.data.reviewerComment.size() <= 500
+        && request.resource.data.reviewedAt == request.time
+        && getAfter(skillOf(resource.data)).data.verificationStatus == request.resource.data.status;
+
+      // Kept as an audit trail.
+      allow delete: if false;
+    }
+
+    // One review per completed application, written by the client (the
+    // gig's poster) about the talent they hired. Reviews never change.
     match /reviews/{reviewId} {
       allow read: if signedIn();
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['gigId', 'applicationId',
+             'reviewerId', 'reviewerName', 'revieweeId', 'rating', 'comment',
+             'createdAt'])
         && request.resource.data.reviewerId == request.auth.uid
+        && request.resource.data.revieweeId != request.auth.uid
         && request.resource.data.applicationId == reviewId
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() >= 10
+        && request.resource.data.comment.size() <= 500
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.reviewerName
+             == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('name', '')
         && application(reviewId).status == 'completed'
         && application(reviewId).posterId == request.auth.uid
-        && application(reviewId).applicantId == request.resource.data.revieweeId;
+        && application(reviewId).applicantId == request.resource.data.revieweeId
+        && application(reviewId).gigId == request.resource.data.gigId;
       allow update, delete: if false;
     }
   }

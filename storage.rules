@@ -18,5 +18,30 @@ service firebase.storage {
         && request.resource.contentType == 'application/pdf';
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Skill verification evidence. Only the owner and authorized reviewers
+    // (reviewers/{uid} in Firestore, active == true) can open it.
+    function isReviewer() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/reviewers/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/reviewers/$(request.auth.uid)).data.get('active', false) == true;
+    }
+
+    match /verifications/{uid}/{requestId}/{fileName} {
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || isReviewer());
+      // A new PDF, JPG or PNG up to 5 MB. Files are never overwritten.
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size > 0
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/jpeg|image/png');
+      allow update: if false;
+      // Only a file whose request was never saved (a failed submission) can
+      // be removed, so submitted evidence stays available to reviewers.
+      allow delete: if request.auth != null
+        && request.auth.uid == uid
+        && !firestore.exists(/databases/(default)/documents/verificationRequests/$(requestId));
+    }
   }
 }
