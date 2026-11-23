@@ -17,10 +17,20 @@ class ApplicationRepository {
         .map(_map);
   }
 
-  Stream<List<GigApplication>> watchByGig(String gigId) {
+  Stream<List<GigApplication>> watchForPoster(String gigId, String posterId) {
     return _apps
         .where('gigId', isEqualTo: gigId)
+        .where('posterId', isEqualTo: posterId)
         .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(_map);
+  }
+
+  /// The signed-in applicant's own row on this gig. No order: one row is enough.
+  Stream<List<GigApplication>> watchMine(String gigId, String applicantId) {
+    return _apps
+        .where('gigId', isEqualTo: gigId)
+        .where('applicantId', isEqualTo: applicantId)
         .snapshots()
         .map(_map);
   }

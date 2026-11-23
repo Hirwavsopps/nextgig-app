@@ -29,6 +29,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         {"fieldPath": "gigId", "order": "ASCENDING"},
+        {"fieldPath": "posterId", "order": "ASCENDING"},
+        {"fieldPath": "createdAt", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "gigId", "order": "ASCENDING"},
         {"fieldPath": "applicantId", "order": "ASCENDING"}
       ]
     },
