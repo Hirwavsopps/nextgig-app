@@ -36,12 +36,16 @@ service cloud.firestore {
           || (signedIn()
               && request.auth.uid != uid
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified'])
-              && request.resource.data.verified == true);
+              && request.resource.data.verified == true
+              && existsAfter(/databases/$(database)/documents/users/$(uid)/skills/$(skillId)/endorsements/$(request.auth.uid)));
 
-        match /endorsements/{endorsementId} {
+        // Document id is the endorser's uid: one endorsement per person,
+        // no self-endorsement, and endorsements are permanent.
+        match /endorsements/{endorserId} {
           allow read: if signedIn();
           allow create: if signedIn()
             && request.auth.uid != uid
+            && endorserId == request.auth.uid
             && request.resource.data.endorserId == request.auth.uid
             && request.resource.data.relationship in ['mentor', 'lecturer', 'client'];
           allow update, delete: if false;

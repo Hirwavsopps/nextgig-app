@@ -126,6 +126,8 @@ class ProfileCubit extends Cubit<ProfileState> {
         relationship: relationship,
         note: note,
       );
+    } on StateError {
+      rethrow;
     } catch (error) {
       _fail(error);
       rethrow;

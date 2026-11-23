@@ -232,6 +232,8 @@ class _SkillTile extends StatelessWidget {
         note: note.text,
       );
       if (context.mounted) showAppMessage(context, 'Skill verified.');
+    } on StateError catch (error) {
+      if (context.mounted) showAppMessage(context, error.message);
     } catch (_) {
       if (context.mounted) {
         showAppMessage(context, 'Could not endorse this skill.');

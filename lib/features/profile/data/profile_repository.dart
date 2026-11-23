@@ -86,8 +86,14 @@ class ProfileRepository {
     required String note,
   }) async {
     final skillRef = _skills(ownerId).doc(skillId);
+    // The endorser's uid is the document id, so each person can endorse a
+    // skill once and the rules can check that a real endorsement exists.
+    final endorsementRef = skillRef.collection('endorsements').doc(endorserId);
+    if ((await endorsementRef.get()).exists) {
+      throw StateError('You have already endorsed this skill.');
+    }
     final batch = _firestore.batch();
-    batch.set(skillRef.collection('endorsements').doc(), {
+    batch.set(endorsementRef, {
       'endorserId': endorserId,
       'endorserName': endorserName,
       'relationship': relationship,
