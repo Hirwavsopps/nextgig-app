@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/core/cloudinary/cloudinary_uploader.dart';
 import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/utils/messenger.dart';

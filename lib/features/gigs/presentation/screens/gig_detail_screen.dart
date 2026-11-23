@@ -1,14 +1,17 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
 import 'package:nextgig/core/utils/formatters.dart';
 import 'package:nextgig/core/widgets/brand_logo.dart';
+import 'package:nextgig/core/widgets/gig_image.dart';
 import 'package:nextgig/core/widgets/mentor_tile.dart';
 import 'package:nextgig/core/widgets/pill.dart';
 import 'package:nextgig/core/widgets/skill_chip.dart';
+import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/gigs/domain/entities/gig.dart';
+import 'package:nextgig/features/messages/presentation/widgets/start_chat.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/widgets/gig_apply_bar.dart';
 
@@ -22,8 +25,6 @@ class GigDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final imageUrl = gig.imageUrl;
     final mentor = gig.mentorName;
 
     return Scaffold(
@@ -86,6 +87,24 @@ class GigDetailScreen extends StatelessWidget {
                   ),
               ],
             ),
+            if (gig.posterId.isNotEmpty &&
+                gig.posterId != context.read<AuthCubit>().state.user?.uid) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => startChat(
+                    context,
+                    otherUid: gig.posterId,
+                    otherName: gig.posterName,
+                    gigId: gig.id,
+                    gigTitle: gig.title,
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                  label: const Text('Message client'),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             _InfoRow(
               icon: Icons.place_outlined,
@@ -100,25 +119,14 @@ class GigDetailScreen extends StatelessWidget {
                       'Deadline ${gig.deadline!.year}-${gig.deadline!.month}-${gig.deadline!.day}',
                 ),
               ),
-            if (imageUrl != null) ...[
-              const SizedBox(height: 14),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadii.control),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => ColoredBox(
-                      color: scheme.surfaceContainerHighest,
-                      child: const Center(
-                        child: Icon(Icons.image_not_supported_outlined),
-                      ),
-                    ),
-                  ),
-                ),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.control),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: GigImage(gig: gig),
               ),
-            ],
+            ),
             const SizedBox(height: 14),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +176,20 @@ class GigDetailScreen extends StatelessWidget {
             if (mentor != null) ...[
               const _SectionTitle('Mentorship partner'),
               MentorTile(name: mentor, caption: 'Included 1-on-1'),
+              if (gig.mentorId != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => startChat(
+                      context,
+                      otherUid: gig.mentorId!,
+                      otherName: mentor,
+                      gigId: gig.id,
+                      gigTitle: gig.title,
+                    ),
+                    child: const Text('Message mentor'),
+                  ),
+                ),
             ],
           ],
         ),

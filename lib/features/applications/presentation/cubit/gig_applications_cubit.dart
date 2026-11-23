@@ -24,10 +24,14 @@ class GigApplicationsCubit extends Cubit<GigApplicationsState> {
   final ReviewRepository _reviews;
   StreamSubscription<List<GigApplication>>? _sub;
 
-  void watch(String gigId) {
+  void watch(
+    String gigId, {
+    required String viewerId,
+    required bool viewerIsPoster,
+  }) {
     _sub?.cancel();
     _sub = _applications
-        .watchByGig(gigId)
+        .watchByGig(gigId, viewerId: viewerId, viewerIsPoster: viewerIsPoster)
         .listen(
           (applications) =>
               emit(GigApplicationsState(applications: applications)),

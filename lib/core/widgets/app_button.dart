@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Full-width button with a 52px height (above the 48px Material tap target).
 class AppButton extends StatelessWidget {

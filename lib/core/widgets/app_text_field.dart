@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Shared text field so every form (login, profile, gig posting) looks the same.
 class AppTextField extends StatelessWidget {

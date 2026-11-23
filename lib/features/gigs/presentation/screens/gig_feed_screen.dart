@@ -1,13 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nextgig/core/constants/app_constants.dart';
 import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/router/app_routes.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
-import 'package:nextgig/core/utils/messenger.dart';
-import 'package:nextgig/core/utils/seed_gigs.dart';
 import 'package:nextgig/core/widgets/brand_logo.dart';
 import 'package:nextgig/core/widgets/empty_view.dart';
 import 'package:nextgig/core/widgets/error_view.dart';
@@ -16,6 +13,7 @@ import 'package:nextgig/core/widgets/loading_view.dart';
 import 'package:nextgig/core/l10n/app_strings.dart';
 import 'package:nextgig/core/settings/settings_cubit.dart';
 import 'package:nextgig/core/widgets/pill.dart';
+import 'package:nextgig/core/widgets/user_avatar.dart';
 import 'package:nextgig/features/matching/domain/recommend_gigs.dart';
 import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
@@ -48,27 +46,11 @@ class GigFeedScreen extends StatelessWidget {
   }
 }
 
-class _GigFeedView extends StatefulWidget {
+class _GigFeedView extends StatelessWidget {
   const _GigFeedView({required this.showRecommended});
 
   /// True only in the same build that provided [ProfileCubit].
   final bool showRecommended;
-
-  @override
-  State<_GigFeedView> createState() => _GigFeedViewState();
-}
-
-class _GigFeedViewState extends State<_GigFeedView> {
-  var _seedStarted = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _seedIfEmpty(context.read<GigFeedCubit>().state);
-    });
-  }
 
   void _openFilters(BuildContext context) {
     final cubit = context.read<GigFeedCubit>();
@@ -140,63 +122,27 @@ class _GigFeedViewState extends State<_GigFeedView> {
   }
 
   @override
-  void didUpdateWidget(covariant _GigFeedView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.showRecommended && !oldWidget.showRecommended) {
-      _seedIfEmpty(context.read<GigFeedCubit>().state);
-    }
-  }
-
-  void _seedIfEmpty(GigFeedState state) {
-    if (_seedStarted) return;
-    if (state.status != GigFeedStatus.loaded || state.allGigs.isNotEmpty) {
-      return;
-    }
-    final user = context.read<AuthCubit>().state.user;
-    if (user == null) return;
-    _seedStarted = true;
-    _writeSample(
-      uid: user.uid,
-      name: user.name.isEmpty ? 'NextGig user' : user.name,
-    );
-  }
-
-  Future<void> _writeSample({required String uid, required String name}) async {
-    try {
-      await seedDemoData(sl<FirebaseFirestore>(), uid: uid, name: name);
-    } catch (error) {
-      if (mounted) showAppMessage(context, '$error');
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocListener<GigFeedCubit, GigFeedState>(
-      listenWhen: (previous, next) =>
-          next.status == GigFeedStatus.loaded && next.allGigs.isEmpty,
-      listener: (context, state) => _seedIfEmpty(state),
-      child: Scaffold(
-        body: SafeArea(
-          child: BlocBuilder<GigFeedCubit, GigFeedState>(
-            builder: (context, state) {
-              return CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: _FeedHeader(
-                      state: state,
-                      onOpenFilters: () => _openFilters(context),
-                    ),
+    return Scaffold(
+      body: SafeArea(
+        child: BlocBuilder<GigFeedCubit, GigFeedState>(
+          builder: (context, state) {
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _FeedHeader(
+                    state: state,
+                    onOpenFilters: () => _openFilters(context),
                   ),
-                  if (widget.showRecommended &&
-                      state.status == GigFeedStatus.loaded)
-                    SliverToBoxAdapter(
-                      child: _RecommendedRow(gigs: state.allGigs),
-                    ),
-                  ..._bodySlivers(context, state),
-                ],
-              );
-            },
-          ),
+                ),
+                if (showRecommended && state.status == GigFeedStatus.loaded)
+                  SliverToBoxAdapter(
+                    child: _RecommendedRow(gigs: state.allGigs),
+                  ),
+                ..._bodySlivers(context, state),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -256,11 +202,7 @@ class _FeedHeader extends StatelessWidget {
                 builder: (context, saved) {
                   return IconButton(
                     tooltip: 'Saved gigs',
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${saved.length} saved gigs')),
-                      );
-                    },
+                    onPressed: () => context.push(AppRoutes.saved),
                     icon: Badge(
                       isLabelVisible: saved.isNotEmpty,
                       label: Text('${saved.length}'),
@@ -269,13 +211,12 @@ class _FeedHeader extends StatelessWidget {
                   );
                 },
               ),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: scheme.surfaceContainerHighest,
-                child: Icon(
-                  Icons.person_outline,
-                  size: 20,
-                  color: scheme.onSurface,
+              BlocBuilder<ProfileCubit, ProfileState>(
+                buildWhen: (prev, curr) => prev.profile != curr.profile,
+                builder: (context, state) => UserAvatar(
+                  name: state.profile?.name ?? '',
+                  photoUrl: state.profile?.photoUrl,
+                  radius: 18,
                 ),
               ),
             ],

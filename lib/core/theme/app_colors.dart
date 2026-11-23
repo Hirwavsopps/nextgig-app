@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Black is the brand color. Brass is the only accent, shared by light and dark.
 class AppColors {

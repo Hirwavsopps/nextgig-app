@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nextgig/core/widgets/app_button.dart';
+import 'package:nextgig/core/widgets/user_avatar.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 
 /// Shows the signed-in user, an email-verification banner and a logout button.
@@ -30,11 +31,9 @@ class AccountSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ListTile(
-              leading: CircleAvatar(
-                backgroundImage: photoUrl.isEmpty
-                    ? null
-                    : NetworkImage(photoUrl),
-                child: photoUrl.isEmpty ? const Icon(Icons.person) : null,
+              leading: UserAvatar(
+                name: displayName ?? user.name,
+                photoUrl: photoUrl,
               ),
               title: Text(
                 (displayName ?? user.name).isEmpty

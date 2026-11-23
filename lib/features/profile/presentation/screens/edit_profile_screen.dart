@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nextgig/core/constants/app_constants.dart';
 import 'package:nextgig/core/utils/messenger.dart';
 import 'package:nextgig/core/widgets/app_button.dart';
 import 'package:nextgig/core/widgets/app_text_field.dart';
@@ -21,6 +22,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final _name = TextEditingController(text: widget.profile.name);
   late final _bio = TextEditingController(text: widget.profile.bio);
   late String _photoUrl = widget.profile.photoUrl;
+  // The dropdown keeps its own selected value; this just remembers it for
+  // saving. Unknown or empty values start with nothing selected.
+  late String? _location =
+      AppConstants.neighborhoods.contains(widget.profile.location)
+      ? widget.profile.location
+      : null;
   var _saving = false;
 
   @override
@@ -46,6 +53,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           AppTextField(controller: _name, label: 'Name'),
           const SizedBox(height: 12),
           AppTextField(controller: _bio, label: 'Bio', maxLines: 3),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _location,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Location in Kigali',
+              prefixIcon: Icon(Icons.place_outlined),
+            ),
+            items: [
+              for (final place in AppConstants.neighborhoods)
+                DropdownMenuItem(value: place, child: Text(place)),
+            ],
+            onChanged: (value) => _location = value,
+          ),
           const SizedBox(height: 16),
           AppButton(label: 'Save', isLoading: _saving, onPressed: _save),
         ],
@@ -65,6 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         name: _name.text,
         bio: _bio.text,
         photoUrl: _photoUrl,
+        location: _location,
       );
       if (mounted) context.pop();
     } catch (_) {
