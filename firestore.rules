@@ -142,6 +142,27 @@ service cloud.firestore {
       }
     }
 
+    // A talent asks the mentor attached to a gig for guidance. Requests are
+    // private to the talent who sent them.
+    match /mentorshipRequests/{requestId} {
+      allow read: if signedIn() && resource.data.talentId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.talentId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 500
+        && request.resource.data.mentorName is string
+        && request.resource.data.mentorName.size() > 0
+        && gig(request.resource.data.gigId).mentorName == request.resource.data.mentorName;
+      // The talent can only cancel their own request.
+      allow update: if signedIn()
+        && resource.data.talentId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status == 'cancelled';
+      allow delete: if signedIn() && resource.data.talentId == request.auth.uid;
+    }
+
     // One review per completed application, written by that gig's poster.
     match /reviews/{reviewId} {
       allow read: if signedIn();

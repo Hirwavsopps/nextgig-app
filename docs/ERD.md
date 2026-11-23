@@ -22,6 +22,8 @@ erDiagram
     CONVERSATIONS ||--o{ MESSAGES : "contains (subcollection)"
     USERS ||--o{ MESSAGES : "sends (senderId)"
     GIGS |o--o{ CONVERSATIONS : "started from (gigId, optional)"
+    USERS ||--o{ MENTORSHIP_REQUESTS : "sends (talentId)"
+    GIGS ||--o{ MENTORSHIP_REQUESTS : "about (gigId, matches the gig mentorName)"
 
     USERS {
         string uid PK "Firebase Auth uid"
@@ -126,6 +128,18 @@ erDiagram
         string senderId FK "users, a participant"
         string text "1 to 2000 chars"
         timestamp createdAt
+    }
+    MENTORSHIP_REQUESTS {
+        string requestId PK "auto id"
+        string talentId FK "users, the sender"
+        string talentName
+        string mentorName "as stored on the gig"
+        string gigId FK "gigs"
+        string gigTitle
+        string message "1 to 500 chars"
+        string status "pending or cancelled"
+        timestamp createdAt
+        timestamp updatedAt
     }
 ```
 
@@ -255,6 +269,22 @@ erDiagram
 | text | string | 1 to 2000 characters; never edited or deleted |
 | createdAt | timestamp | server timestamp; messages are ordered by it |
 
+### mentorshipRequests/{requestId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id |
+| talentId | string | **FK** to users, the talent who asked; only they can read, cancel or delete it |
+| talentName | string | |
+| mentorName | string | exactly as stored on the gig, e.g. "David Mugisha (Senior Creative Lead)"; must match the gig |
+| gigId | string | **FK** to gigs |
+| gigTitle | string | copied so the list does not re-read the gig |
+| message | string | 1 to 500 characters |
+| status | string | `pending`, or `cancelled` by the talent |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+Mentors are not a separate collection: the dashboard groups open gigs by their `mentorName`.
+
 ## Relationships
 | Relationship | Cardinality | How it is stored |
 |---|---|---|
@@ -272,6 +302,8 @@ erDiagram
 | conversation → messages | 1 to many | subcollection `conversations/{id}/messages` |
 | user → messages sent | 1 to many | `messages.senderId` |
 | gig → conversations | 1 to many, optional | `conversations.gigId` |
+| user → mentorship requests | 1 to many | `mentorshipRequests.talentId` |
+| gig → mentorship requests | 1 to many | `mentorshipRequests.gigId` |
 
 ## Firebase Storage
 | Path | Contents | Access |
