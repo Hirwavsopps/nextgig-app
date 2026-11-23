@@ -22,6 +22,9 @@ class ProfileRepository {
         bio: data['bio'] as String? ?? '',
         photoUrl: data['photoUrl'] as String? ?? '',
         role: data['role'] as String? ?? '',
+        location: data['location'] as String? ?? '',
+        cvUrl: data['cvUrl'] as String? ?? '',
+        cvName: data['cvName'] as String? ?? '',
       );
     });
   }
@@ -31,11 +34,13 @@ class ProfileRepository {
     required String name,
     required String bio,
     required String photoUrl,
+    String? location,
   }) async {
     await _firestore.collection('users').doc(uid).set({
       'name': name.trim(),
       'bio': bio.trim(),
       'photoUrl': photoUrl.trim(),
+      if (location != null) 'location': location.trim(),
     }, SetOptions(merge: true));
     if (_auth.currentUser?.uid == uid) {
       await _auth.currentUser?.updateDisplayName(name.trim());

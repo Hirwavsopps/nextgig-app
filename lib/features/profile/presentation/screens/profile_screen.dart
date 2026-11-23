@@ -101,6 +101,16 @@ class _ProfileView extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(profile!.bio),
               ],
+              if (profile?.location.isNotEmpty ?? false) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.place_outlined, size: 18),
+                    const SizedBox(width: 6),
+                    Text('Kigali, ${profile!.location}'),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
               Text(t('skills'), style: Theme.of(context).textTheme.titleMedium),
               if (state.skills.isEmpty) const Text('No skills yet.'),

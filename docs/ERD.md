@@ -33,6 +33,7 @@ erDiagram
         string role "talent or mentor"
         string bio
         string photoUrl "Cloudinary URL"
+        string location "Kigali neighborhood, optional"
         timestamp createdAt
     }
     SKILLS {
@@ -155,6 +156,7 @@ erDiagram
 | role | string | `talent` or `mentor`, chosen at sign-up and cannot change |
 | bio | string | |
 | photoUrl | string | Cloudinary URL |
+| location | string | Kigali neighborhood from AppConstants.neighborhoods, optional |
 | createdAt | timestamp | server timestamp |
 
 ### users/{uid}/skills/{skillId}
