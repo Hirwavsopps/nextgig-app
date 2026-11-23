@@ -60,17 +60,22 @@ class MessageRepository {
     String? gigId,
   }) async {
     final id = conversationId(meId, otherId);
-    final ref = _conversations.doc(id);
-    final existing = await ref.get();
-    if (existing.exists) return id;
     final ids = [meId, otherId]..sort();
-    await ref.set({
-      'participantIds': ids,
-      'names': {meId: myName, otherId: otherName},
-      'lastText': '',
-      'updatedAt': FieldValue.serverTimestamp(),
-      'gigId': ?gigId,
-    });
+    final ref = _conversations.doc(id);
+    try {
+      // set on a missing doc is a create. A read would fail the rule first.
+      await ref.set({
+        'participantIds': ids,
+        'names': {meId: myName, otherId: otherName},
+        'lastText': '',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'gigId': ?gigId,
+      });
+    } on FirebaseException catch (error) {
+      if (error.code != 'permission-denied') rethrow;
+      final existing = await ref.get();
+      if (!existing.exists) rethrow;
+    }
     return id;
   }
 

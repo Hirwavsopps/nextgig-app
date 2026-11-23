@@ -123,6 +123,7 @@ final GoRouter appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: ':id',
+                  parentNavigatorKey: _rootNavigatorKey,
                   builder: (context, state) {
                     final id = state.pathParameters['id'] ?? '';
                     final uid = sl<AuthCubit>().state.user?.uid ?? '';

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:nextgig/core/di/injection.dart';
 import 'package:nextgig/core/l10n/app_strings.dart';
 import 'package:nextgig/core/router/app_routes.dart';
@@ -148,31 +149,87 @@ class _SkillTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: SkillChip(label: skill.name, verified: skill.verified),
-      subtitle: Text(skill.proficiency),
-      trailing: mine
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () =>
-                      context.push(AppRoutes.skillForm, extra: skill),
-                  icon: const Icon(Icons.edit_outlined),
+    final portfolio = [
+      for (final item in skill.portfolio)
+        if (item.title.trim().isNotEmpty ||
+            item.imageUrl.isNotEmpty ||
+            item.link.isNotEmpty)
+          item,
+    ];
+    final proof = skill.proofUrl;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: SkillChip(label: skill.name, verified: skill.verified),
+          subtitle: Text(skill.proficiency),
+          trailing: mine
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () =>
+                          context.push(AppRoutes.skillForm, extra: skill),
+                      icon: const Icon(Icons.edit_outlined),
+                    ),
+                    IconButton(
+                      onPressed: () => context.read<ProfileCubit>().deleteSkill(
+                        uid,
+                        skill.id,
+                      ),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                )
+              : TextButton(
+                  onPressed: () => _endorse(context),
+                  child: const Text('Endorse'),
                 ),
-                IconButton(
-                  onPressed: () =>
-                      context.read<ProfileCubit>().deleteSkill(uid, skill.id),
-                  icon: const Icon(Icons.delete_outline),
+        ),
+        for (final item in portfolio) ...[
+          if (item.title.trim().isNotEmpty)
+            Text(item.title, style: Theme.of(context).textTheme.bodyMedium),
+          if (item.imageUrl.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  item.imageUrl,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Text('Could not load this image.'),
                 ),
-              ],
-            )
-          : TextButton(
-              onPressed: () => _endorse(context),
-              child: const Text('Endorse'),
+              ),
             ),
+          if (item.link.isNotEmpty)
+            TextButton(
+              onPressed: () => _open(context, item.link),
+              child: Text(
+                item.link,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+        if (proof != null && proof.isNotEmpty)
+          TextButton(
+            onPressed: () => _open(context, proof),
+            child: const Text('Proof document'),
+          ),
+      ],
     );
+  }
+
+  Future<void> _open(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) showAppMessage(context, 'Could not open the file.');
+    }
   }
 
   Future<void> _endorse(BuildContext context) async {

@@ -12,6 +12,7 @@ import 'package:nextgig/features/applications/domain/entities/gig_application.da
 import 'package:nextgig/features/applications/presentation/cubit/gig_applications_cubit.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/gigs/domain/entities/gig.dart';
+import 'package:nextgig/features/messages/presentation/open_thread.dart';
 
 class GigApplyBar extends StatelessWidget {
   const GigApplyBar({super.key, required this.gig});
@@ -118,7 +119,7 @@ class _ApplyBody extends StatelessWidget {
       isScrollControlled: true,
       builder: (_) => BlocProvider<GigApplicationsCubit>.value(
         value: cubit,
-        child: _ApplicantsSheet(gig: gig),
+        child: _ApplicantsSheet(gig: gig, host: context),
       ),
     );
   }
@@ -130,9 +131,12 @@ String _statusLabel(ApplicationStatus status) {
 }
 
 class _ApplicantsSheet extends StatelessWidget {
-  const _ApplicantsSheet({required this.gig});
+  const _ApplicantsSheet({required this.gig, required this.host});
 
   final Gig gig;
+
+  /// Context under the gig screen, still mounted after this sheet closes.
+  final BuildContext host;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +162,11 @@ class _ApplicantsSheet extends StatelessWidget {
                   )
                 else
                   for (final application in applications)
-                    _ApplicantRow(gig: gig, application: application),
+                    _ApplicantRow(
+                      gig: gig,
+                      application: application,
+                      host: host,
+                    ),
               ],
             ),
           );
@@ -169,19 +177,67 @@ class _ApplicantsSheet extends StatelessWidget {
 }
 
 class _ApplicantRow extends StatelessWidget {
-  const _ApplicantRow({required this.gig, required this.application});
+  const _ApplicantRow({
+    required this.gig,
+    required this.application,
+    required this.host,
+  });
 
   final Gig gig;
   final GigApplication application;
+  final BuildContext host;
+
+  void _closeAnd(BuildContext sheetContext, VoidCallback action) {
+    Navigator.of(sheetContext).pop();
+    // Pushing in the same frame as the sheet pop reuses a route key.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!host.mounted) return;
+      action();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final name = application.applicantName.isEmpty
+        ? 'Applicant'
+        : application.applicantName;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(application.applicantName),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _closeAnd(
+                    context,
+                    () => host.push(AppRoutes.user(application.applicantId)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      name,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Message',
+                onPressed: () => _closeAnd(
+                  context,
+                  () => openThread(
+                    host,
+                    otherId: application.applicantId,
+                    otherName: name,
+                    gigId: gig.id,
+                  ),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline),
+              ),
+            ],
+          ),
           DropdownButton<ApplicationStatus>(
             value: application.status,
             isExpanded: true,
