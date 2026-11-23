@@ -7,19 +7,32 @@ service cloud.firestore {
     function isOwner(uid) {
       return signedIn() && request.auth.uid == uid;
     }
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+    function gig(id) {
+      return get(/databases/$(database)/documents/gigs/$(id)).data;
+    }
     function application(id) {
       return get(/databases/$(database)/documents/applications/$(id)).data;
     }
 
+    // Profiles are visible to signed-in users so they can be viewed and
+    // endorsed. Only the owner writes, and the role cannot change later.
     match /users/{uid} {
-      allow read, create, update: if isOwner(uid);
+      allow read: if signedIn();
+      allow create: if isOwner(uid)
+        && request.resource.data.role in ['talent', 'mentor'];
+      allow update: if isOwner(uid)
+        && request.resource.data.get('role', null) == resource.data.get('role', null);
       allow delete: if false;
 
+      // The owner manages their skills but can never mark one verified.
       match /skills/{skillId} {
         allow read: if signedIn();
         allow create: if isOwner(uid) && request.resource.data.verified == false;
         allow delete: if isOwner(uid);
-        allow update: if isOwner(uid)
+        allow update: if (isOwner(uid) && unchanged('verified'))
           || (signedIn()
               && request.auth.uid != uid
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verified'])
@@ -29,40 +42,63 @@ service cloud.firestore {
           allow read: if signedIn();
           allow create: if signedIn()
             && request.auth.uid != uid
-            && request.resource.data.endorserId == request.auth.uid;
+            && request.resource.data.endorserId == request.auth.uid
+            && request.resource.data.relationship in ['mentor', 'lecturer', 'client'];
           allow update, delete: if false;
         }
       }
 
+      // Earnings are private to their owner.
       match /earnings/{earningId} {
         allow read, create, update, delete: if isOwner(uid);
+      }
+
+      // Another user sends a notification as themselves; only the
+      // recipient reads it, marks it read, or deletes it.
+      match /notifications/{notificationId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if signedIn()
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.userId == uid
+          && request.resource.data.isRead == false;
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
       }
     }
 
     match /gigs/{gigId} {
       allow read: if signedIn();
       allow create: if signedIn()
-        && request.resource.data.posterId == request.auth.uid;
-      allow update, delete: if signedIn()
+        && request.resource.data.posterId == request.auth.uid
+        && request.resource.data.pay is number
+        && request.resource.data.pay >= 0;
+      allow update: if signedIn()
+        && resource.data.posterId == request.auth.uid
+        && unchanged('posterId');
+      allow delete: if signedIn()
         && resource.data.posterId == request.auth.uid;
     }
 
+    // Only the applicant and the gig's poster can see an application.
+    // The applicant creates it for a real gig; only the poster changes status.
     match /applications/{applicationId} {
       allow read: if signedIn()
         && (resource.data.applicantId == request.auth.uid
             || resource.data.posterId == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.applicantId == request.auth.uid
-        && request.resource.data.status == 'applied';
+        && request.resource.data.status == 'applied'
+        && request.resource.data.posterId == gig(request.resource.data.gigId).posterId;
       allow update: if signedIn()
         && resource.data.posterId == request.auth.uid
-        && request.resource.data.gigId == resource.data.gigId
-        && request.resource.data.applicantId == resource.data.applicantId
-        && request.resource.data.posterId == resource.data.posterId
+        && unchanged('gigId')
+        && unchanged('applicantId')
+        && unchanged('posterId')
         && request.resource.data.status in ['applied', 'shortlisted', 'hired', 'completed', 'declined'];
       allow delete: if false;
     }
 
+    // One review per completed application, written by that gig's poster.
     match /reviews/{reviewId} {
       allow read: if signedIn();
       allow create: if signedIn()
