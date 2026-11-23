@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/core/theme/app_colors.dart';
 
 /// Small pill showing a skill. [verified] adds a badge (used by skill verification).

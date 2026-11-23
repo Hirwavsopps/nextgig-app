@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Temporary screen for features that are not built yet.
 /// Each member replaces the placeholder in their own feature folder.

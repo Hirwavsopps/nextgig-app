@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Colors sampled from the Figma prototype screenshots.
 /// If the designers change a color in Figma, change it here and nowhere else.
