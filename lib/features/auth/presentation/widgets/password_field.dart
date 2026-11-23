@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/core/widgets/app_text_field.dart';
 
 /// Password field with a show/hide eye (as in the Figma login and sign-up).

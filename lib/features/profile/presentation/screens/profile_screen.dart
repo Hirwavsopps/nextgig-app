@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/features/auth/presentation/widgets/account_section.dart';
 
 class ProfileScreen extends StatelessWidget {

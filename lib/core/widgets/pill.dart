@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Small uppercase label, e.g. "LIVE IN KIGALI", "OPEN GIG", "FIXED PRICE".
 /// [filled] = black pill, [outlined] = transparent with a border,

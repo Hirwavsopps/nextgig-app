@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/core/theme/app_theme.dart';
 import 'package:nextgig/core/utils/category_icons.dart';
 import 'package:nextgig/core/utils/formatters.dart';

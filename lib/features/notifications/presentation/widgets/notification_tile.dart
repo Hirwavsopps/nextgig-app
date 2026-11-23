@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../domain/entities/app_notification.dart';
 
 class NotificationTile extends StatelessWidget {

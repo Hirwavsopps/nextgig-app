@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The round black "N" mark from the Figma header.
 class BrandLogo extends StatelessWidget {

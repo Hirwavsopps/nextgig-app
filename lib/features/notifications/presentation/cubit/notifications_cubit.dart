@@ -5,15 +5,11 @@ import 'notifications_state.dart';
 
 class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit({
-    required WatchNotifications watch,
-    required MarkNotificationRead markRead,
-    required MarkAllNotificationsRead markAllRead,
-    required DeleteNotification delete,
-  })  : _watch = watch,
-        _markRead = markRead,
-        _markAllRead = markAllRead,
-        _delete = delete,
-        super(const NotificationsState());
+    required this._watch,
+    required this._markRead,
+    required this._markAllRead,
+    required this._delete,
+  }) : super(const NotificationsState());
 
   final WatchNotifications _watch;
   final MarkNotificationRead _markRead;
@@ -37,10 +33,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         ),
       );
     } catch (_) {
-      emit(state.copyWith(
-        status: NotificationsStatus.failure,
-        errorMessage: 'Please sign in to see notifications.',
-      ));
+      emit(
+        state.copyWith(
+          status: NotificationsStatus.failure,
+          errorMessage: 'Please sign in to see notifications.',
+        ),
+      );
     }
   }
 
@@ -55,7 +53,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<void> markRead(String id) async {
     try {
       await _markRead(id);
-    } catch (_) {}
+    } catch (_) {
+    }
   }
 
   Future<void> markAllRead() async {

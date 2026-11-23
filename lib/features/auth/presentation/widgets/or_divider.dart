@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// "OR CONTINUE WITH" divider between the form and the Google button.
 class OrDivider extends StatelessWidget {

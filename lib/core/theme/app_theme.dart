@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:nextgig/core/theme/app_colors.dart';
 
 /// Corner radii used across the app (taken from the Figma cards and fields).
