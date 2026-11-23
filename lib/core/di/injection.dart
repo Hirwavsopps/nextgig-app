@@ -24,6 +24,11 @@ import 'package:nextgig/features/gigs/domain/usecases/watch_gigs.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/gig_feed_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nextgig/features/notifications/data/datasources/notification_remote_data_source.dart';
+import 'package:nextgig/features/notifications/data/repositories/notification_repository_impl.dart';
+import 'package:nextgig/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:nextgig/features/notifications/domain/usecases/notification_usecases.dart';
+import 'package:nextgig/features/notifications/presentation/cubit/notifications_cubit.dart';
 
 /// Service locator. Every member registers their own feature's dependencies here
 /// (or in a `registerXFeature()` function called from [configureDependencies]).
@@ -58,6 +63,27 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<WatchGigs>(() => WatchGigs(sl()));
   sl.registerFactory<GigFeedCubit>(() => GigFeedCubit(sl()));
 
+    // Feature: notifications
+  sl.registerLazySingleton<NotificationRemoteDataSource>(
+    () => NotificationRemoteDataSource(sl()),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(sl(), sl()), // (remote, FirebaseAuth)
+  );
+  sl.registerLazySingleton<WatchNotifications>(() => WatchNotifications(sl()));
+  sl.registerLazySingleton<MarkNotificationRead>(() => MarkNotificationRead(sl()));
+  sl.registerLazySingleton<MarkAllNotificationsRead>(() => MarkAllNotificationsRead(sl()));
+  sl.registerLazySingleton<DeleteNotification>(() => DeleteNotification(sl()));
+  sl.registerLazySingleton<SendNotification>(() => SendNotification(sl()));
+
+  sl.registerLazySingleton<NotificationsCubit>(
+    () => NotificationsCubit(
+      watch: sl(),
+      markRead: sl(),
+      markAllRead: sl(),
+      delete: sl(),
+    ),
+  );
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepository(sl(), sl()),
   );

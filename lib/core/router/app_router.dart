@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
@@ -16,6 +16,7 @@ import 'package:nextgig/features/gigs/presentation/screens/gig_detail_screen.dar
 import 'package:nextgig/features/gigs/presentation/screens/gig_feed_screen.dart';
 import 'package:nextgig/features/messages/presentation/screens/messages_screen.dart';
 import 'package:nextgig/features/mentorship/presentation/screens/mentors_screen.dart';
+import 'package:nextgig/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:nextgig/features/postings/presentation/screens/gig_form_screen.dart';
 import 'package:nextgig/features/postings/presentation/screens/postings_screen.dart';
 import 'package:nextgig/features/profile/domain/entities/skill.dart';
@@ -71,6 +72,10 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+  path: AppRoutes.notifications,
+  builder: (context, state) => const NotificationsScreen(),
+),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           MainShell(navigationShell: navigationShell),

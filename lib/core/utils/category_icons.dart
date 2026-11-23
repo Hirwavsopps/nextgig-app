@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Icon shown next to a gig category (card header and detail screen).
 IconData categoryIcon(String category) {
