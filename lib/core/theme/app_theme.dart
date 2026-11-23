@@ -13,6 +13,91 @@ class AppTheme {
 
   static const String fontFamily = 'PlusJakartaSans';
 
+  static ThemeData _theme({
+    required ColorScheme scheme,
+    required Color scaffold,
+    required Color navBackground,
+    required Color navSelected,
+    required Color navUnselected,
+  }) {
+    final controlRadius = BorderRadius.circular(AppRadii.control);
+    final controlShape = RoundedRectangleBorder(borderRadius: controlRadius);
+    OutlineInputBorder fieldBorder(Color color, {double width = 1}) {
+      return OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide(color: color, width: width),
+      );
+    }
+
+    return ThemeData(
+      useMaterial3: true,
+      fontFamily: fontFamily,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scaffold,
+      appBarTheme: AppBarTheme(
+        backgroundColor: scaffold,
+        foregroundColor: scheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
+          shape: controlShape,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: scheme.onSurface,
+          side: BorderSide(color: scheme.outlineVariant),
+          shape: controlShape,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+        elevation: 0,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: scheme.surfaceContainerHighest,
+        border: fieldBorder(scheme.outlineVariant),
+        enabledBorder: fieldBorder(scheme.outlineVariant),
+        focusedBorder: fieldBorder(scheme.primary, width: 1.4),
+      ),
+      cardTheme: CardThemeData(
+        color: scheme.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return scheme.primary;
+            return scheme.surface;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return scheme.onPrimary;
+            return scheme.onSurface;
+          }),
+          side: WidgetStateProperty.all(
+            BorderSide(color: scheme.outlineVariant),
+          ),
+        ),
+      ),
+      navigationBarTheme: _navigationBarTheme(
+        background: navBackground,
+        selected: navSelected,
+        unselected: navUnselected,
+      ),
+    );
+  }
+
   static NavigationBarThemeData _navigationBarTheme({
     required Color background,
     required Color selected,
@@ -38,13 +123,12 @@ class AppTheme {
     );
   }
 
-  static ThemeData get light => ThemeData(
-    useMaterial3: true,
-    fontFamily: fontFamily,
-    colorScheme: const ColorScheme.light(
+  static ThemeData get light => _theme(
+    scheme: const ColorScheme.light(
       primary: AppColors.primary,
       onPrimary: AppColors.onPrimary,
-      secondary: AppColors.ink,
+      secondary: AppColors.accent,
+      onSecondary: AppColors.primary,
       surface: AppColors.surface,
       onSurface: AppColors.ink,
       onSurfaceVariant: AppColors.muted,
@@ -52,33 +136,28 @@ class AppTheme {
       outlineVariant: AppColors.border,
       error: AppColors.danger,
     ),
-    scaffoldBackgroundColor: AppColors.background,
-    navigationBarTheme: _navigationBarTheme(
-      background: AppColors.surface,
-      selected: AppColors.primary,
-      unselected: AppColors.muted,
-    ),
+    scaffold: AppColors.background,
+    navBackground: AppColors.surface,
+    navSelected: AppColors.primary,
+    navUnselected: AppColors.muted,
   );
 
-  static ThemeData get dark => ThemeData(
-    useMaterial3: true,
-    fontFamily: fontFamily,
-    colorScheme: const ColorScheme.dark(
-      primary: Color(0xFFFFFFFF),
-      onPrimary: Color(0xFF000000),
-      secondary: Color(0xFFEDEDED),
-      surface: Color(0xFF1B1B1B),
-      onSurface: Color(0xFFEDEDED),
-      onSurfaceVariant: Color(0xFFB0B0B2),
-      surfaceContainerHighest: Color(0xFF2A2A2C),
-      outlineVariant: Color(0xFF3A3A3C),
+  static ThemeData get dark => _theme(
+    scheme: const ColorScheme.dark(
+      primary: AppColors.onPrimary,
+      onPrimary: AppColors.primary,
+      secondary: AppColors.accent,
+      onSecondary: AppColors.primary,
+      surface: AppColors.darkSurface,
+      onSurface: AppColors.darkInk,
+      onSurfaceVariant: AppColors.darkMuted,
+      surfaceContainerHighest: AppColors.darkFill,
+      outlineVariant: AppColors.darkBorder,
       error: Color(0xFFFFB4AB),
     ),
-    scaffoldBackgroundColor: const Color(0xFF121212),
-    navigationBarTheme: _navigationBarTheme(
-      background: const Color(0xFF1B1B1B),
-      selected: const Color(0xFFFFFFFF),
-      unselected: const Color(0xFFB0B0B2),
-    ),
+    scaffold: AppColors.darkBackground,
+    navBackground: AppColors.darkSurface,
+    navSelected: AppColors.darkInk,
+    navUnselected: AppColors.darkMuted,
   );
 }

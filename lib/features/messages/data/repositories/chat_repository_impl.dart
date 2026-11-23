@@ -20,8 +20,10 @@ class ChatRepositoryImpl implements ChatRepository {
     return _conversations
         .where('participantIds', arrayContains: myUid)
         .snapshots()
-        .map((snap) {
-          final list = snap.docs.map(_toConversation).toList();
+        .asyncMap((snap) async {
+          final list = await Future.wait(
+            snap.docs.map((doc) => _withProfile(_toConversation(doc), myUid)),
+          );
           list.sort((a, b) {
             final at = a.lastMessageAt ?? DateTime(0);
             final bt = b.lastMessageAt ?? DateTime(0);
@@ -110,18 +112,62 @@ class ChatRepositoryImpl implements ChatRepository {
 
   Conversation _toConversation(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? const {};
-    final last = d['lastMessageAt'];
-    final names = (d['participantNames'] as Map?) ?? const {};
+    final last = d['lastMessageAt'] ?? d['updatedAt'];
+    // Older chats stored names under `names` / preview under `lastText`.
+    final names = <String, String>{
+      ..._stringMap(d['names']),
+      ..._stringMap(d['participantNames']),
+    };
     return Conversation(
       id: doc.id,
       participantIds: List<String>.from(
         (d['participantIds'] as List?) ?? const [],
       ),
-      participantNames: names.map((k, v) => MapEntry('$k', '$v')),
+      participantNames: names,
+      participantPhotos: _stringMap(d['participantPhotos']),
       gigId: d['gigId'] as String?,
       gigTitle: d['gigTitle'] as String?,
-      lastMessageText: d['lastMessageText'] as String? ?? '',
+      lastMessageText:
+          d['lastMessageText'] as String? ?? d['lastText'] as String? ?? '',
       lastMessageAt: last is Timestamp ? last.toDate() : null,
+    );
+  }
+
+  Map<String, String> _stringMap(Object? raw) {
+    if (raw is! Map) return const {};
+    return raw.map((k, v) => MapEntry('$k', '$v'));
+  }
+
+  /// Fill blank name/photo from the other user's profile doc.
+  Future<Conversation> _withProfile(Conversation chat, String myUid) async {
+    final other = chat.otherId(myUid);
+    if (other == null) return chat;
+    final storedName = chat.participantNames[other]?.trim() ?? '';
+    final storedPhoto = chat.participantPhotos[other] ?? '';
+    if (storedName.isNotEmpty && storedPhoto.isNotEmpty) return chat;
+
+    final snap = await _firestore.collection('users').doc(other).get();
+    final data = snap.data();
+    if (data == null) return chat;
+    final name = (data['name'] as String?)?.trim() ?? '';
+    final photo = (data['photoUrl'] as String?) ?? '';
+    if (name.isEmpty && photo.isEmpty) return chat;
+
+    return Conversation(
+      id: chat.id,
+      participantIds: chat.participantIds,
+      participantNames: {
+        ...chat.participantNames,
+        if (storedName.isEmpty && name.isNotEmpty) other: name,
+      },
+      participantPhotos: {
+        ...chat.participantPhotos,
+        if (storedPhoto.isEmpty && photo.isNotEmpty) other: photo,
+      },
+      gigId: chat.gigId,
+      gigTitle: chat.gigTitle,
+      lastMessageText: chat.lastMessageText,
+      lastMessageAt: chat.lastMessageAt,
     );
   }
 }

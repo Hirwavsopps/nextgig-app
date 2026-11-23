@@ -29,7 +29,7 @@ class GigFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.read<AuthCubit>().state.user?.uid;
+    final uid = context.watch<AuthCubit>().state.user?.uid;
     final category = context.read<SettingsCubit>().state.preferredCategory;
     return MultiBlocProvider(
       providers: [
@@ -41,13 +41,16 @@ class GigFeedScreen extends StatelessWidget {
             create: (_) => sl<ProfileCubit>()..watch(uid),
           ),
       ],
-      child: const _GigFeedView(),
+      child: _GigFeedView(showRecommended: uid != null),
     );
   }
 }
 
 class _GigFeedView extends StatelessWidget {
-  const _GigFeedView();
+  const _GigFeedView({required this.showRecommended});
+
+  /// True only in the same build that provided [ProfileCubit].
+  final bool showRecommended;
 
   void _openFilters(BuildContext context) {
     final cubit = context.read<GigFeedCubit>();
@@ -132,8 +135,7 @@ class _GigFeedView extends StatelessWidget {
                     onOpenFilters: () => _openFilters(context),
                   ),
                 ),
-                if (state.status == GigFeedStatus.loaded &&
-                    context.read<AuthCubit>().state.user != null)
+                if (showRecommended && state.status == GigFeedStatus.loaded)
                   SliverToBoxAdapter(
                     child: _RecommendedRow(gigs: state.allGigs),
                   ),

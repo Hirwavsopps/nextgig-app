@@ -6,6 +6,7 @@ class Conversation extends Equatable {
     required this.id,
     required this.participantIds,
     this.participantNames = const {},
+    this.participantPhotos = const {},
     this.gigId,
     this.gigTitle,
     this.lastMessageText = '',
@@ -21,6 +22,9 @@ class Conversation extends Equatable {
   /// doesn't need to load every profile.
   final Map<String, String> participantNames;
 
+  /// uid -> photo URL (profile `photoUrl`), filled when the inbox loads.
+  final Map<String, String> participantPhotos;
+
   /// The gig the chat started from, if any.
   final String? gigId;
   final String? gigTitle;
@@ -32,8 +36,21 @@ class Conversation extends Equatable {
     return pair.join('_');
   }
 
+  /// The other person in this one-to-one chat.
+  String? otherId(String myUid) {
+    for (final id in participantIds) {
+      if (id != myUid) return id;
+    }
+    return null;
+  }
+
   /// The other person's name, from my point of view.
   String otherName(String myUid) {
+    final id = otherId(myUid);
+    if (id != null) {
+      final name = participantNames[id]?.trim() ?? '';
+      if (name.isNotEmpty) return name;
+    }
     for (final entry in participantNames.entries) {
       if (entry.key != myUid && entry.value.trim().isNotEmpty) {
         return entry.value;
@@ -42,11 +59,18 @@ class Conversation extends Equatable {
     return 'NextGig user';
   }
 
+  String otherPhoto(String myUid) {
+    final id = otherId(myUid);
+    if (id == null) return '';
+    return participantPhotos[id] ?? '';
+  }
+
   @override
   List<Object?> get props => [
     id,
     participantIds,
     participantNames,
+    participantPhotos,
     gigId,
     gigTitle,
     lastMessageText,

@@ -50,6 +50,16 @@ void main() {
       expect(chat.otherName('alice'), 'Bob');
       expect(chat.otherName('bob'), 'Alice');
     });
+
+    test('otherPhoto returns the other participant photo', () {
+      const chat = Conversation(
+        id: 'alice_bob',
+        participantIds: ['alice', 'bob'],
+        participantPhotos: {'alice': 'a.jpg', 'bob': 'b.jpg'},
+      );
+      expect(chat.otherPhoto('alice'), 'b.jpg');
+      expect(chat.otherPhoto('bob'), 'a.jpg');
+    });
   });
 
   group('chat use cases', () {

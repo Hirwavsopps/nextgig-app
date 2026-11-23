@@ -71,13 +71,18 @@ class _MessagesView extends StatelessWidget {
                 itemBuilder: (context, i) {
                   final c = state.conversations[i];
                   final name = c.otherName(myUid);
+                  final photo = c.otherPhoto(myUid);
                   final when = c.lastMessageAt;
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 6,
                     ),
-                    leading: UserAvatar(name: name, radius: 24),
+                    leading: UserAvatar(
+                      name: name,
+                      photoUrl: photo,
+                      radius: 24,
+                    ),
                     title: Text(
                       name,
                       style: const TextStyle(fontWeight: FontWeight.w700),

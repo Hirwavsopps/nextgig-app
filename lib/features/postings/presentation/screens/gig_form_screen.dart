@@ -23,8 +23,18 @@ class GigFormScreen extends StatefulWidget {
 
 class _GigFormScreenState extends State<GigFormScreen> {
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   final _formKey = GlobalKey<FormState>();
@@ -64,7 +74,8 @@ class _GigFormScreenState extends State<GigFormScreen> {
       .where((skill) => skill.isNotEmpty)
       .toList();
 
-  String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+  String _formatDate(DateTime d) =>
+      '${d.day} ${_months[d.month - 1]} ${d.year}';
 
   InputDecoration _decoration(
     BuildContext context, {
@@ -121,9 +132,7 @@ class _GigFormScreenState extends State<GigFormScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             Text(
-              _isEditing
-                  ? 'Update the details talent will see.'
-                  : 'Tell talent what you need. A clear gig gets better applicants.',
+              _isEditing ? 'Update the details talent will see.' : 'Tell talent what you need. A clear gig gets better applicants.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -350,6 +359,7 @@ class _GigFormScreenState extends State<GigFormScreen> {
       escrowFunded: widget.gig?.escrowFunded ?? false,
       deliverables: widget.gig?.deliverables ?? const [],
       mentorName: widget.gig?.mentorName,
+      mentorId: widget.gig?.mentorId,
       imageUrl: _imageUrl.isEmpty ? null : _imageUrl,
       createdAt: widget.gig?.createdAt,
       deadline: _deadline,
