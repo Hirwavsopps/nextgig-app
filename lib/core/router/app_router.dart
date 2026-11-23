@@ -30,6 +30,18 @@ import 'package:nextgig/features/profile/presentation/screens/edit_profile_scree
 import 'package:nextgig/features/profile/presentation/screens/profile_screen.dart';
 import 'package:nextgig/features/profile/presentation/screens/skill_form_screen.dart';
 import 'package:nextgig/features/settings/presentation/screens/settings_screen.dart';
+import 'package:nextgig/features/applications/domain/entities/gig_application.dart';
+import 'package:nextgig/features/reviews/presentation/cubit/review_form_cubit.dart';
+import 'package:nextgig/features/reviews/presentation/screens/review_form_screen.dart';
+import 'package:nextgig/features/verification/presentation/cubit/evidence_upload_cubit.dart';
+import 'package:nextgig/features/verification/presentation/cubit/skill_verification_cubit.dart';
+import 'package:nextgig/features/verification/presentation/cubit/verification_decision_cubit.dart';
+import 'package:nextgig/features/verification/presentation/cubit/verification_queue_cubit.dart';
+import 'package:nextgig/features/verification/presentation/screens/evidence_upload_screen.dart';
+import 'package:nextgig/features/verification/presentation/screens/review_request_screen.dart';
+import 'package:nextgig/features/verification/presentation/screens/skill_verification_screen.dart';
+import 'package:nextgig/features/verification/presentation/screens/verification_detail_screen.dart';
+import 'package:nextgig/features/verification/presentation/screens/verification_queue_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -110,6 +122,83 @@ final GoRouter appRouter = GoRouter(
         return ChatScreen(
           conversationId: state.pathParameters['id'] ?? '',
           title: title is String ? title : null,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.verification,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => BlocProvider(
+        create: (_) => sl<ProfileCubit>()..watch(_signedInUid()),
+        child: const SkillVerificationScreen(),
+      ),
+      routes: [
+        GoRoute(
+          path: 'queue',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => BlocProvider(
+            create: (_) => sl<VerificationQueueCubit>()..watch(_signedInUid()),
+            child: const VerificationQueueScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'request/:id',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => BlocProvider(
+            create: (_) => sl<VerificationDecisionCubit>()
+              ..watch(
+                requestId: state.pathParameters['id'] ?? '',
+                viewerId: _signedInUid(),
+              ),
+            child: const ReviewRequestScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'skill/:skillId',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => BlocProvider(
+            create: (_) => sl<SkillVerificationCubit>()
+              ..watch(_signedInUid(), state.pathParameters['skillId'] ?? ''),
+            child: const VerificationDetailScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: 'upload',
+              parentNavigatorKey: _rootNavigatorKey,
+              builder: (context, state) {
+                final skill = state.extra;
+                if (skill is! Skill) {
+                  return const PlaceholderScreen(
+                    title: 'Upload evidence',
+                    note: 'Open a skill from Skill verification.',
+                  );
+                }
+                return BlocProvider(
+                  create: (_) => sl<EvidenceUploadCubit>(),
+                  child: EvidenceUploadScreen(skill: skill),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+    GoRoute(
+      path: AppRoutes.reviewFormPattern,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final application = state.extra;
+        if (application is! GigApplication) {
+          return const PlaceholderScreen(
+            title: 'Review',
+            note: 'Open a completed gig to leave a review.',
+          );
+        }
+        return BlocProvider(
+          create: (_) =>
+              sl<ReviewFormCubit>()
+                ..load(application: application, viewerId: _signedInUid()),
+          child: ReviewFormScreen(application: application),
         );
       },
     ),
@@ -219,3 +308,5 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+
+String _signedInUid() => sl<AuthCubit>().state.user?.uid ?? '';

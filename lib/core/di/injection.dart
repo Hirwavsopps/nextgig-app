@@ -15,7 +15,18 @@ import 'package:nextgig/features/postings/presentation/cubit/postings_cubit.dart
 import 'package:nextgig/features/profile/data/profile_repository.dart';
 import 'package:nextgig/features/profile/presentation/cubit/cv_cubit.dart';
 import 'package:nextgig/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:nextgig/features/reviews/data/review_repository.dart';
+import 'package:nextgig/features/reviews/data/repositories/review_repository_impl.dart';
+import 'package:nextgig/features/reviews/domain/repositories/review_repository.dart';
+import 'package:nextgig/features/reviews/domain/usecases/review_usecases.dart';
+import 'package:nextgig/features/reviews/presentation/cubit/review_form_cubit.dart';
+import 'package:nextgig/features/verification/data/datasources/verification_remote_data_source.dart';
+import 'package:nextgig/features/verification/data/repositories/verification_repository_impl.dart';
+import 'package:nextgig/features/verification/domain/repositories/verification_repository.dart';
+import 'package:nextgig/features/verification/domain/usecases/verification_usecases.dart';
+import 'package:nextgig/features/verification/presentation/cubit/evidence_upload_cubit.dart';
+import 'package:nextgig/features/verification/presentation/cubit/skill_verification_cubit.dart';
+import 'package:nextgig/features/verification/presentation/cubit/verification_decision_cubit.dart';
+import 'package:nextgig/features/verification/presentation/cubit/verification_queue_cubit.dart';
 import 'package:nextgig/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:nextgig/features/auth/domain/repositories/auth_repository.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
@@ -114,7 +125,7 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepository(sl(), sl()),
   );
-  sl.registerLazySingleton<ReviewRepository>(() => ReviewRepository(sl()));
+  sl.registerLazySingleton<ReviewRepository>(() => ReviewRepositoryImpl(sl()));
   sl.registerLazySingleton<ApplicationRepository>(
     () => ApplicationRepository(sl()),
   );
@@ -141,4 +152,30 @@ Future<void> configureDependencies() async {
     () => MentorshipRepositoryImpl(sl()),
   );
   sl.registerFactory<MentorshipCubit>(() => MentorshipCubit(sl(), sl()));
+
+  // Feature: skill verification and reviews
+  sl.registerLazySingleton<VerificationRemoteDataSource>(
+    () => VerificationRemoteDataSource(sl(), sl()),
+  );
+  sl.registerLazySingleton<VerificationRepository>(
+    () => VerificationRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<SubmitSkillEvidence>(
+    () => SubmitSkillEvidence(sl()),
+  );
+  sl.registerLazySingleton<DecideVerification>(() => DecideVerification(sl()));
+  sl.registerFactory<SkillVerificationCubit>(
+    () => SkillVerificationCubit(sl(), sl()),
+  );
+  sl.registerFactory<EvidenceUploadCubit>(
+    () => EvidenceUploadCubit(sl(), sl()),
+  );
+  sl.registerFactory<VerificationQueueCubit>(
+    () => VerificationQueueCubit(sl()),
+  );
+  sl.registerFactory<VerificationDecisionCubit>(
+    () => VerificationDecisionCubit(sl(), sl(), sl()),
+  );
+  sl.registerLazySingleton<SubmitReview>(() => SubmitReview(sl()));
+  sl.registerFactory<ReviewFormCubit>(() => ReviewFormCubit(sl(), sl()));
 }

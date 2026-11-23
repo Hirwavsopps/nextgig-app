@@ -117,6 +117,18 @@ class _SkillFormScreenState extends State<SkillFormScreen> {
       showAppMessage(context, 'Skill name is required.');
       return;
     }
+    // A reviewer endorsed this name; firestore.rules keeps it fixed.
+    final existing = widget.skill;
+    if (existing != null &&
+        !existing.status.canSubmitEvidence &&
+        _name.text.trim() != existing.name) {
+      showAppMessage(
+        context,
+        'A ${existing.status.label.toLowerCase()} skill cannot be renamed. '
+        'Add it as a new skill instead.',
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       final cubit = context.read<ProfileCubit>();
