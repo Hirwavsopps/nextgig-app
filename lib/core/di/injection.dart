@@ -23,6 +23,9 @@ import 'package:nextgig/features/gigs/domain/repositories/gig_repository.dart';
 import 'package:nextgig/features/gigs/domain/usecases/watch_gigs.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/gig_feed_cubit.dart';
+import 'package:nextgig/features/mentorship/data/repositories/mentorship_repository_impl.dart';
+import 'package:nextgig/features/mentorship/domain/repositories/mentorship_repository.dart';
+import 'package:nextgig/features/mentorship/presentation/cubit/mentorship_cubit.dart';
 import 'package:nextgig/features/messages/data/repositories/chat_repository_impl.dart';
 import 'package:nextgig/features/messages/domain/repositories/chat_repository.dart';
 import 'package:nextgig/features/messages/domain/usecases/chat_usecases.dart';
@@ -118,4 +121,10 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<SendMessage>(() => SendMessage(sl()));
   sl.registerFactory<ConversationsCubit>(() => ConversationsCubit(sl()));
   sl.registerFactory<ChatCubit>(() => ChatCubit(sl(), sl()));
+
+  // Feature: mentorship
+  sl.registerLazySingleton<MentorshipRepository>(
+    () => MentorshipRepositoryImpl(sl()),
+  );
+  sl.registerFactory<MentorshipCubit>(() => MentorshipCubit(sl(), sl()));
 }
