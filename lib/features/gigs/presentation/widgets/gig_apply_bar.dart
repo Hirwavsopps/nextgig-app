@@ -12,7 +12,7 @@ import 'package:nextgig/features/applications/domain/entities/gig_application.da
 import 'package:nextgig/features/applications/presentation/cubit/gig_applications_cubit.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:nextgig/features/gigs/domain/entities/gig.dart';
-import 'package:nextgig/features/messages/presentation/open_thread.dart';
+import 'package:nextgig/features/messages/presentation/widgets/start_chat.dart';
 
 class GigApplyBar extends StatelessWidget {
   const GigApplyBar({super.key, required this.gig});
@@ -21,12 +21,12 @@ class GigApplyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.watch<AuthCubit>().state.user?.uid;
+    final uid = context.read<AuthCubit>().state.user?.uid;
     if (uid == null) return const SizedBox.shrink();
     return BlocProvider(
       create: (_) =>
           sl<GigApplicationsCubit>()
-            ..watch(gigId: gig.id, uid: uid, asPoster: uid == gig.posterId),
+            ..watch(gig.id, viewerId: uid, viewerIsPoster: gig.posterId == uid),
       child: _ApplyBody(gig: gig, uid: uid),
     );
   }
@@ -227,11 +227,12 @@ class _ApplicantRow extends StatelessWidget {
                 tooltip: 'Message',
                 onPressed: () => _closeAnd(
                   context,
-                  () => openThread(
+                  () => startChat(
                     host,
-                    otherId: application.applicantId,
+                    otherUid: application.applicantId,
                     otherName: name,
                     gigId: gig.id,
+                    gigTitle: gig.title,
                   ),
                 ),
                 icon: const Icon(Icons.chat_bubble_outline),

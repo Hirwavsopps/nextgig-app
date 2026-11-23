@@ -77,6 +77,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String name,
     required String bio,
     required String photoUrl,
+    String? location,
   }) async {
     try {
       await _profiles.updateProfile(
@@ -84,6 +85,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         name: name,
         bio: bio,
         photoUrl: photoUrl,
+        location: location,
       );
     } catch (error) {
       _fail(error);
@@ -126,6 +128,8 @@ class ProfileCubit extends Cubit<ProfileState> {
         relationship: relationship,
         note: note,
       );
+    } on StateError {
+      rethrow;
     } catch (error) {
       _fail(error);
       rethrow;
