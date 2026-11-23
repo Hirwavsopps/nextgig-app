@@ -1,20 +1,183 @@
-# NextGig data model (Firestore)
+# NextGig data model (Cloud Firestore)
 
 Member 3 owns this file. **Field names are frozen once agreed** - the ERD in the report
-must match Firestore exactly, so nobody adds fields without updating this file.
+must match Firestore exactly, so nobody adds a field without updating this file.
 
-## gigs
+## Entity-relationship diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ SKILLS : "owns (subcollection)"
+    SKILLS ||--o{ ENDORSEMENTS : "receives (subcollection)"
+    USERS ||--o{ ENDORSEMENTS : "gives (endorserId)"
+    USERS ||--o{ EARNINGS : "records (subcollection)"
+    USERS ||--o{ NOTIFICATIONS : "receives (subcollection)"
+    USERS ||--o{ GIGS : "posts (posterId)"
+    GIGS ||--o{ APPLICATIONS : "receives (gigId)"
+    USERS ||--o{ APPLICATIONS : "applies (applicantId)"
+    APPLICATIONS ||--o| REVIEWS : "reviewed once (doc id = application id)"
+    USERS ||--o{ REVIEWS : "writes and receives (reviewerId, revieweeId)"
+    GIGS |o--o{ EARNINGS : "paid for (gigId, optional)"
+
+    USERS {
+        string uid PK "Firebase Auth uid"
+        string name
+        string email
+        string phone
+        string role "talent or mentor"
+        string bio
+        string photoUrl "Cloudinary URL"
+        timestamp createdAt
+    }
+    SKILLS {
+        string skillId PK "auto id"
+        string ownerUid FK "parent users uid"
+        string name
+        string proficiency "beginner, intermediate, advanced"
+        array portfolio "list of title, imageUrl, link"
+        string proofUrl "Firebase Storage URL"
+        string proofStoragePath
+        bool verified "true only after an endorsement"
+    }
+    ENDORSEMENTS {
+        string endorserId PK "doc id = endorser uid, FK users"
+        string endorserName
+        string relationship "mentor, lecturer, client"
+        string note
+        timestamp createdAt
+    }
+    EARNINGS {
+        string earningId PK "auto id"
+        number amount "RWF, recorded only"
+        string gigTitle
+        string gigId FK "optional, gigs"
+        string mobileMoneyRef "MoMo or Airtel reference"
+        timestamp createdAt
+    }
+    NOTIFICATIONS {
+        string notificationId PK "auto id"
+        string userId FK "recipient, users"
+        string senderId FK "users"
+        string type "application, message, match, payment, system"
+        string title
+        string body
+        string gigId FK "optional, gigs"
+        bool isRead
+        timestamp createdAt
+    }
+    GIGS {
+        string gigId PK "auto id"
+        string title
+        string description
+        string category
+        string neighborhood
+        number pay "RWF"
+        array requiredSkills
+        string posterName
+        string posterId FK "users"
+        string duration
+        string level
+        number applicantCount
+        bool verifiedClient
+        bool escrowFunded "recorded status only"
+        array deliverables
+        string mentorName "optional"
+        string imageUrl "optional, Cloudinary URL"
+        timestamp deadline "optional"
+        timestamp createdAt
+    }
+    APPLICATIONS {
+        string applicationId PK "auto id"
+        string gigId FK "gigs"
+        string gigTitle "copied from the gig"
+        string applicantId FK "users"
+        string applicantName
+        string posterId FK "users, equals the gig posterId"
+        string status "applied, shortlisted, hired, completed, declined"
+        timestamp createdAt
+    }
+    REVIEWS {
+        string reviewId PK "same as applicationId"
+        string applicationId FK "applications"
+        string gigId FK "gigs"
+        string reviewerId FK "users, the poster"
+        string revieweeId FK "users, the applicant"
+        number rating "1 to 5"
+        string comment
+        timestamp createdAt
+    }
+```
+
+## Collections
+
+### users/{uid}
 | Field | Type | Notes |
 |---|---|---|
-| (doc id) | string | primary key, auto id |
+| (doc id) | string | **PK**, Firebase Auth uid |
+| name | string | |
+| email | string | |
+| phone | string | |
+| role | string | `talent` or `mentor`, chosen at sign-up and cannot change |
+| bio | string | |
+| photoUrl | string | Cloudinary URL |
+| createdAt | timestamp | server timestamp |
+
+### users/{uid}/skills/{skillId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id; the parent `uid` is the owner (**FK** to users) |
+| name | string | |
+| proficiency | string | `beginner`, `intermediate` or `advanced` |
+| portfolio | array<{title, imageUrl, link}> | imageUrl is a Cloudinary URL |
+| proofUrl | string | Firebase Storage download URL, optional |
+| proofStoragePath | string | `proofs/{uid}/{skillId}/{fileName}` |
+| verified | bool | created `false`; only an endorsement can set it to `true` |
+
+### users/{uid}/skills/{skillId}/endorsements/{endorserId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK** and **FK** to users: the endorser's uid, so one endorsement per person |
+| endorserId | string | same as the doc id; cannot be the skill owner |
+| endorserName | string | |
+| relationship | string | `mentor`, `lecturer` or `client` |
+| note | string | |
+| createdAt | timestamp | |
+
+### users/{uid}/earnings/{earningId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id |
+| amount | number | RWF, recorded only (no live payment) |
+| gigTitle | string | |
+| gigId | string | **FK** to gigs, optional |
+| mobileMoneyRef | string | MoMo or Airtel reference |
+| createdAt | timestamp | |
+
+### users/{uid}/notifications/{notificationId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id |
+| userId | string | **FK** to users, the recipient (same as the parent uid) |
+| senderId | string | **FK** to users, the signed-in sender |
+| type | string | `application`, `message`, `match`, `payment` or `system` |
+| title | string | |
+| body | string | |
+| gigId | string | **FK** to gigs, optional |
+| isRead | bool | created `false`; only the recipient can change it |
+| createdAt | timestamp | |
+
+### gigs/{gigId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id |
 | title | string | |
 | description | string | |
 | category | string | one of AppConstants.gigCategories |
 | neighborhood | string | one of AppConstants.neighborhoods |
 | pay | number | RWF |
-| requiredSkills | array<string> | |
+| requiredSkills | array<string> | used for "Recommended for you" matching |
 | posterName | string | |
-| posterId | string | FK -> users/{uid} |
+| posterId | string | **FK** to users; cannot change after creation |
 | duration | string | e.g. "2 weeks"; empty = flexible |
 | level | string | e.g. "Jr / Mid"; empty = any |
 | applicantCount | number | default 0 |
@@ -24,70 +187,64 @@ must match Firestore exactly, so nobody adds fields without updating this file.
 | mentorName | string | optional |
 | imageUrl | string | optional, Cloudinary URL |
 | deadline | timestamp | optional |
-| createdAt | timestamp | server timestamp; feed is ordered by it |
+| createdAt | timestamp | set once on create; the feed is ordered by it |
 
-## users
+### applications/{applicationId}
 | Field | Type | Notes |
 |---|---|---|
-| (doc id) | string | Firebase Auth uid |
-| name | string | |
-| email | string | |
-| phone | string | |
-| role | string | talent or poster |
-| bio | string | |
-| photoUrl | string | Cloudinary URL |
-| createdAt | timestamp | |
-
-## users/{uid}/skills
-| Field | Type | Notes |
-|---|---|---|
-| (doc id) | string | |
-| name | string | |
-| proficiency | string | beginner, intermediate, or advanced |
-| portfolio | array<{title, imageUrl, link}> | imageUrl is a Cloudinary URL |
-| proofUrl | string | Firebase Storage download URL |
-| proofStoragePath | string | |
-| verified | bool | set true by an endorsement |
-
-## users/{uid}/skills/{id}/endorsements
-| Field | Type | Notes |
-|---|---|---|
-| endorserId | string | cannot be the skill owner |
-| endorserName | string | |
-| relationship | string | mentor, lecturer, or client |
-| note | string | |
-| createdAt | timestamp | |
-
-## applications
-| Field | Type | Notes |
-|---|---|---|
-| (doc id) | string | |
-| gigId | string | FK -> gigs |
-| gigTitle | string | copied so the list does not re-read the gig |
-| applicantId | string | FK -> users |
+| (doc id) | string | **PK**, auto id |
+| gigId | string | **FK** to gigs |
+| gigTitle | string | copied so lists do not re-read the gig |
+| applicantId | string | **FK** to users |
 | applicantName | string | |
-| posterId | string | FK -> users |
-| status | string | applied, shortlisted, hired, completed, declined |
+| posterId | string | **FK** to users; must equal the gig's posterId |
+| status | string | `applied`, `shortlisted`, `hired`, `completed` or `declined` |
 | createdAt | timestamp | |
 
-## reviews
+### reviews/{reviewId}
 | Field | Type | Notes |
 |---|---|---|
-| (doc id) | string | same as the application id, one review each |
-| gigId | string | |
-| applicationId | string | |
-| reviewerId | string | the poster |
-| revieweeId | string | the applicant |
+| (doc id) | string | **PK**, same as the application id, so one review per application |
+| gigId | string | **FK** to gigs |
+| applicationId | string | **FK** to applications |
+| reviewerId | string | **FK** to users, the poster |
+| revieweeId | string | **FK** to users, the applicant |
 | rating | number | 1 to 5 |
 | comment | string | |
 | createdAt | timestamp | |
 
-## users/{uid}/earnings
-| Field | Type | Notes |
+## Relationships
+| Relationship | Cardinality | How it is stored |
 |---|---|---|
-| (doc id) | string | |
-| amount | number | RWF, recorded only |
-| gigTitle | string | |
-| gigId | string | optional |
-| mobileMoneyRef | string | MoMo or Airtel reference, not a live charge |
-| createdAt | timestamp | |
+| user → skills | 1 to many | subcollection `users/{uid}/skills` |
+| skill → endorsements | 1 to many | subcollection, doc id = endorser uid |
+| user → endorsements given | 1 to many | `endorserId` |
+| user → earnings | 1 to many | subcollection `users/{uid}/earnings` |
+| user → notifications | 1 to many | subcollection `users/{uid}/notifications`, `senderId` links the sender |
+| user → gigs posted | 1 to many | `gigs.posterId` |
+| gig → applications | 1 to many | `applications.gigId` |
+| user → applications | 1 to many | `applications.applicantId` |
+| application → review | 1 to 0..1 | review doc id = application id |
+| user → reviews written and received | 1 to many | `reviewerId` / `revieweeId` |
+
+## Firebase Storage
+| Path | Contents | Access |
+|---|---|---|
+| `proofs/{uid}/{skillId}/{fileName}` | certificate or portfolio proof | signed-in users read; only the owner writes; max 5 MB |
+
+## Stored on the device, not in Firestore
+| Data | Where |
+|---|---|
+| theme, language (`en` / `rw`), preferred gig category | SharedPreferences |
+| bookmarked gig ids | in memory for the current session |
+
+## Composite indexes (firestore.indexes.json)
+| Collection | Fields | Used by |
+|---|---|---|
+| gigs | posterId ↑, createdAt ↓ | a poster's own gigs |
+| applications | applicantId ↑, createdAt ↓ | "My applications" |
+| applications | gigId ↑, createdAt ↓ | kept for older builds |
+| applications | gigId ↑, applicantId ↑ | duplicate-application check |
+| applications | gigId ↑, posterId ↑, createdAt ↓ | the poster sees a gig's applicants |
+| applications | gigId ↑, applicantId ↑, createdAt ↓ | an applicant sees their own application on a gig |
+| reviews | revieweeId ↑, createdAt ↓ | reviews on a profile |
