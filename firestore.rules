@@ -102,6 +102,46 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // One-to-one chats: only the two participants can see or write them.
+    function isParticipant(data) {
+      return signedIn() && request.auth.uid in data.participantIds;
+    }
+
+    match /conversations/{conversationId} {
+      // `resource == null` lets the app check whether a chat already exists
+      // before creating it; a missing document reveals nothing.
+      allow get: if signedIn()
+        && (resource == null || isParticipant(resource.data));
+      // The chat list query must itself filter on participantIds.
+      allow list: if isParticipant(resource.data);
+      // The id is the two sorted uids joined by "_", so each pair of people
+      // has exactly one chat, and nobody can open a chat with themselves.
+      allow create: if isParticipant(request.resource.data)
+        && request.resource.data.participantIds.size() == 2
+        && request.resource.data.participantIds[0] != request.resource.data.participantIds[1]
+        && conversationId == request.resource.data.participantIds[0] + '_' + request.resource.data.participantIds[1];
+      // Participants only refresh the last-message preview.
+      allow update: if isParticipant(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageText', 'lastMessageAt', 'updatedAt']);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function chat() {
+          return get(/databases/$(database)/documents/conversations/$(conversationId)).data;
+        }
+
+        allow read: if isParticipant(chat());
+        // Send only as yourself, 1 to 2000 characters.
+        allow create: if isParticipant(chat())
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+        // Messages are never edited or deleted, so the record stays honest.
+        allow update, delete: if false;
+      }
+    }
+
     // One review per completed application, written by that gig's poster.
     match /reviews/{reviewId} {
       allow read: if signedIn();

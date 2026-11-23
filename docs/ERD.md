@@ -18,6 +18,10 @@ erDiagram
     APPLICATIONS ||--o| REVIEWS : "reviewed once (doc id = application id)"
     USERS ||--o{ REVIEWS : "writes and receives (reviewerId, revieweeId)"
     GIGS |o--o{ EARNINGS : "paid for (gigId, optional)"
+    USERS }|--o{ CONVERSATIONS : "takes part in (participantIds, exactly 2)"
+    CONVERSATIONS ||--o{ MESSAGES : "contains (subcollection)"
+    USERS ||--o{ MESSAGES : "sends (senderId)"
+    GIGS |o--o{ CONVERSATIONS : "started from (gigId, optional)"
 
     USERS {
         string uid PK "Firebase Auth uid"
@@ -104,6 +108,23 @@ erDiagram
         string revieweeId FK "users, the applicant"
         number rating "1 to 5"
         string comment
+        timestamp createdAt
+    }
+    CONVERSATIONS {
+        string conversationId PK "sorted uids joined by _"
+        array participantIds FK "exactly 2 users"
+        map participantNames "uid to display name"
+        string gigId FK "optional, gigs"
+        string gigTitle "optional"
+        string lastMessageText "preview, max 120 chars"
+        timestamp lastMessageAt
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    MESSAGES {
+        string messageId PK "auto id"
+        string senderId FK "users, a participant"
+        string text "1 to 2000 chars"
         timestamp createdAt
     }
 ```
@@ -213,6 +234,27 @@ erDiagram
 | comment | string | |
 | createdAt | timestamp | |
 
+### conversations/{conversationId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, the two participants' uids sorted and joined by `_`, so each pair has one chat |
+| participantIds | array<string> | **FK** to users, exactly 2 different uids |
+| participantNames | map<uid, string> | copied in when the chat starts, so the list does not load every profile |
+| gigId | string | **FK** to gigs, optional: the gig the chat started from |
+| gigTitle | string | optional |
+| lastMessageText | string | preview for the chat list, max 120 characters |
+| lastMessageAt | timestamp | null until the first message; the list is sorted by it |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+### conversations/{conversationId}/messages/{messageId}
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id |
+| senderId | string | **FK** to users; must be the signed-in participant |
+| text | string | 1 to 2000 characters; never edited or deleted |
+| createdAt | timestamp | server timestamp; messages are ordered by it |
+
 ## Relationships
 | Relationship | Cardinality | How it is stored |
 |---|---|---|
@@ -226,6 +268,10 @@ erDiagram
 | user → applications | 1 to many | `applications.applicantId` |
 | application → review | 1 to 0..1 | review doc id = application id |
 | user → reviews written and received | 1 to many | `reviewerId` / `revieweeId` |
+| users ↔ conversations | many to many (2 per chat) | `conversations.participantIds` |
+| conversation → messages | 1 to many | subcollection `conversations/{id}/messages` |
+| user → messages sent | 1 to many | `messages.senderId` |
+| gig → conversations | 1 to many, optional | `conversations.gigId` |
 
 ## Firebase Storage
 | Path | Contents | Access |
