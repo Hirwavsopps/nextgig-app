@@ -25,6 +25,11 @@ erDiagram
     USERS ||--o{ MESSAGES : "sends (senderId)"
     GIGS |o--o{ CONVERSATIONS : "started from (gigId, optional)"
     USERS ||--o{ MENTORSHIP_REQUESTS : "sends (talentId)"
+    SKILLS ||--o{ VERIFICATION_REQUESTS : "evidence for (skillId)"
+    USERS ||--o{ VERIFICATION_REQUESTS : "submits (userId)"
+    REVIEWERS ||--o{ VERIFICATION_REQUESTS : "decides (reviewerId)"
+    USERS ||--o| REVIEWERS : "authorized as (doc id = uid)"
+    VERIFICATION_REQUESTS ||--o| ENDORSEMENTS : "approval writes (requestId)"
     GIGS ||--o{ MENTORSHIP_REQUESTS : "about (gigId, matches the gig mentorName)"
 
     USERS {
@@ -48,13 +53,20 @@ erDiagram
         array portfolio "list of title, imageUrl, link"
         string proofUrl "Firebase Storage URL"
         string proofStoragePath
-        bool verified "true only after an endorsement"
+        bool verified "true only after a reviewer approves"
+        string verificationStatus "unverified, pending, verified, rejected"
+        string verificationId FK "latest verificationRequests id"
+        timestamp verifiedAt
+        string verifiedById FK "reviewers uid"
+        string verifiedByName
+        string verifiedByRelationship "mentor, lecturer, client"
     }
     ENDORSEMENTS {
         string endorserId PK "doc id = endorser uid, FK users"
         string endorserName
         string relationship "mentor, lecturer, client"
         string note
+        string requestId FK "verificationRequests"
         timestamp createdAt
     }
     EARNINGS {
@@ -117,8 +129,9 @@ erDiagram
         string gigId FK "gigs"
         string reviewerId FK "users, the poster"
         string revieweeId FK "users, the applicant"
+        string reviewerName "copied from the poster's profile"
         number rating "1 to 5"
-        string comment
+        string comment "10 to 500 chars"
         timestamp createdAt
     }
     CONVERSATIONS {
@@ -150,6 +163,34 @@ erDiagram
         timestamp createdAt
         timestamp updatedAt
     }
+    REVIEWERS {
+        string uid PK "doc id = Firebase Auth uid"
+        string name
+        string relationship "mentor, lecturer, client"
+        string title
+        string organization
+        bool active
+    }
+    VERIFICATION_REQUESTS {
+        string requestId PK "auto id"
+        string userId FK "users, the skill owner"
+        string userName
+        string skillId FK "users/{userId}/skills"
+        string skillName
+        string evidenceUrl "Firebase Storage URL"
+        string evidenceFileName
+        string evidencePath "verifications/{uid}/{requestId}/{file}"
+        string evidenceContentType "application/pdf, image/jpeg, image/png"
+        string evidenceType
+        string note "0 to 500 chars"
+        string status "pending, verified, rejected"
+        timestamp submittedAt
+        string reviewerId FK "reviewers, null until decided"
+        string reviewerName
+        string reviewerRelationship
+        string reviewerComment "3 to 500 chars"
+        timestamp reviewedAt
+    }
 ```
 
 ## Collections
@@ -178,16 +219,23 @@ erDiagram
 | portfolio | array<{title, imageUrl, link}> | imageUrl is a Cloudinary URL |
 | proofUrl | string | Firebase Storage download URL, optional |
 | proofStoragePath | string | `proofs/{uid}/{skillId}/{fileName}` |
-| verified | bool | created `false`; only an endorsement can set it to `true` |
+| verified | bool | created `false`; only an authorized reviewer's approval sets it to `true` |
+| verificationStatus | string | `unverified` (created), `pending`, `verified` or `rejected`; the owner can only move it to `pending` together with a new request |
+| verificationId | string | **FK** to verificationRequests, the latest submission |
+| verifiedAt | timestamp | server time of the approval |
+| verifiedById | string | **FK** to reviewers, the approving reviewer |
+| verifiedByName | string | must match `reviewers/{verifiedById}.name` |
+| verifiedByRelationship | string | `mentor`, `lecturer` or `client` |
 
 ### users/{uid}/skills/{skillId}/endorsements/{endorserId}
 | Field | Type | Notes |
 |---|---|---|
 | (doc id) | string | **PK** and **FK** to users: the endorser's uid, so one endorsement per person |
-| endorserId | string | same as the doc id; cannot be the skill owner |
-| endorserName | string | |
-| relationship | string | `mentor`, `lecturer` or `client` |
-| note | string | |
+| endorserId | string | same as the doc id; an active reviewer, never the skill owner |
+| endorserName | string | must match the reviewer document |
+| relationship | string | `mentor`, `lecturer` or `client`, from the reviewer document |
+| note | string | the reviewer's comment |
+| requestId | string | **FK** to verificationRequests; the request must be approved by this reviewer in the same batch |
 | createdAt | timestamp | |
 
 ### users/{uid}/earnings/{earningId}
@@ -262,10 +310,11 @@ erDiagram
 | gigId | string | **FK** to gigs |
 | applicationId | string | **FK** to applications |
 | reviewerId | string | **FK** to users, the poster |
+| reviewerName | string | copied from `users/{reviewerId}.name`; checked by the rules |
 | revieweeId | string | **FK** to users, the applicant |
-| rating | number | 1 to 5 |
-| comment | string | |
-| createdAt | timestamp | |
+| rating | number | integer 1 to 5 |
+| comment | string | 10 to 500 characters |
+| createdAt | timestamp | server timestamp; reviews are never edited or deleted |
 
 ### conversations/{conversationId}
 | Field | Type | Notes |
@@ -304,6 +353,42 @@ erDiagram
 
 Mentors are not a separate collection: the dashboard groups open gigs by their `mentorName`.
 
+### reviewers/{uid}
+Who may approve or reject skill evidence. Read-only for the app; created in the Firebase Console or by `tool/seed.mjs`, so choosing "mentor" at sign-up does not grant it.
+
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK** and **FK** to users: the reviewer's Auth uid |
+| name | string | shown on endorsements |
+| relationship | string | `mentor`, `lecturer` or `client` |
+| title | string | optional, e.g. "Senior Creative Lead" |
+| organization | string | optional |
+| active | bool | `false` revokes access without deleting history |
+
+### verificationRequests/{requestId}
+One evidence submission for one skill. Readable only by its owner and active reviewers.
+
+| Field | Type | Notes |
+|---|---|---|
+| (doc id) | string | **PK**, auto id, also the Storage folder name |
+| userId | string | **FK** to users, the skill owner |
+| userName | string | |
+| skillId | string | **FK** to `users/{userId}/skills` |
+| skillName | string | must equal the skill's name |
+| evidenceUrl | string | Firebase Storage download URL |
+| evidenceFileName | string | original file name |
+| evidencePath | string | `verifications/{userId}/{requestId}/{safeFileName}` |
+| evidenceContentType | string | `application/pdf`, `image/jpeg` or `image/png` |
+| evidenceType | string | `professionalCertificate`, `academicCertificate`, `courseCertificate`, `portfolio` or `other` |
+| note | string | 0 to 500 characters |
+| status | string | created `pending`; a reviewer sets `verified` or `rejected` once |
+| submittedAt | timestamp | server timestamp |
+| reviewerId | string | **FK** to reviewers, `null` until decided |
+| reviewerName | string | |
+| reviewerRelationship | string | |
+| reviewerComment | string | 3 to 500 characters |
+| reviewedAt | timestamp | server timestamp of the decision |
+
 ## Relationships
 | Relationship | Cardinality | How it is stored |
 |---|---|---|
@@ -324,12 +409,16 @@ Mentors are not a separate collection: the dashboard groups open gigs by their `
 | gig → conversations | 1 to many, optional | `conversations.gigId` |
 | user → mentorship requests | 1 to many | `mentorshipRequests.talentId` |
 | gig → mentorship requests | 1 to many | `mentorshipRequests.gigId` |
+| skill → verification requests | 1 to many | `verificationRequests.skillId`; the latest is `skills.verificationId` |
+| reviewer → decisions | 1 to many | `verificationRequests.reviewerId` |
+| verification request → endorsement | 1 to 0..1 | `endorsements.requestId`, written on approval |
 
 ## Firebase Storage
 | Path | Contents | Access |
 |---|---|---|
 | `proofs/{uid}/{skillId}/{fileName}` | certificate or portfolio proof | signed-in users read; only the owner writes; max 5 MB |
 | `cvs/{uid}/cv.pdf` | the user's CV, one per user | signed-in users read; only the owner uploads (PDF, max 5 MB) or deletes |
+| `verifications/{uid}/{requestId}/{fileName}` | skill verification evidence | owner and active reviewers read; only the owner creates (PDF/JPG/PNG, max 5 MB); never overwritten; deletable only if its request was never saved |
 
 ## Stored on the device, not in Firestore
 | Data | Where |
@@ -346,3 +435,6 @@ Mentors are not a separate collection: the dashboard groups open gigs by their `
 | applications | gigId ↑, posterId ↑, createdAt ↓ | the poster sees a gig's applicants |
 | applications | gigId ↑, applicantId ↑, createdAt ↓ | an applicant sees their own application on a gig |
 | reviews | revieweeId ↑, createdAt ↓ | reviews on a profile |
+| verificationRequests | userId ↑, skillId ↑, submittedAt ↓ | a skill's submission history |
+| verificationRequests | status ↑, submittedAt ↑ | the reviewer queue, oldest first |
+| verificationRequests | reviewerId ↑, reviewedAt ↓ | "Reviewed" tab for a reviewer |

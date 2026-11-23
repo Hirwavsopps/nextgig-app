@@ -225,7 +225,37 @@ for (const user of users) {
   await ensureUser(user);
 }
 
+// Skill verification demo: reset Aline's submissions so the Figma skill is
+// Unverified again and David can endorse it on every rehearsal.
+const figmaSkill = db
+  .collection('users')
+  .doc(talentId)
+  .collection('skills')
+  .doc('seed-figma-skill');
+const staleRequests = await db
+  .collection('verificationRequests')
+  .where('userId', '==', talentId)
+  .get();
+const staleEndorsements = await figmaSkill.collection('endorsements').get();
+const cleanup = db.batch();
+for (const doc of [...staleRequests.docs, ...staleEndorsements.docs]) {
+  cleanup.delete(doc.ref);
+}
+cleanup.delete(db.collection('reviews').doc('seed-done-salon'));
+await cleanup.commit();
+
 const batch = db.batch();
+
+// Only accounts listed here can approve or reject skill evidence. Add a
+// lecturer or client the same way, or create the document in the Console.
+batch.set(db.collection('reviewers').doc(mentorId), {
+  name: 'David Mugisha',
+  relationship: 'mentor',
+  title: 'Senior Creative Lead',
+  organization: 'NextGig mentors',
+  active: true,
+});
+
 for (const gig of gigs) {
   const { id, ...fields } = gig;
   batch.set(db.collection('gigs').doc(id), {
@@ -243,6 +273,11 @@ batch.set(db.collection('users').doc(talentId).collection('skills').doc('seed-fl
   proofUrl: null,
   proofStoragePath: null,
   verified: true,
+  verificationStatus: 'verified',
+  verifiedAt: createdAt,
+  verifiedById: mentorId,
+  verifiedByName: 'David Mugisha',
+  verifiedByRelationship: 'mentor',
 });
 batch.set(db.collection('users').doc(talentId).collection('skills').doc('seed-figma-skill'), {
   name: 'Figma',
@@ -251,6 +286,7 @@ batch.set(db.collection('users').doc(talentId).collection('skills').doc('seed-fi
   proofUrl: null,
   proofStoragePath: null,
   verified: false,
+  verificationStatus: 'unverified',
 });
 batch.set(
   db
@@ -286,11 +322,22 @@ batch.set(db.collection('applications').doc('seed-done'), {
   status: 'completed',
   createdAt,
 });
+// Completed but not reviewed yet, for demonstrating a new review.
+batch.set(db.collection('applications').doc('seed-done-salon'), {
+  gigId: 'seed-salon',
+  gigTitle: 'Build a landing page for a salon',
+  applicantId: talentId,
+  applicantName: 'Aline Uwase',
+  posterId,
+  status: 'completed',
+  createdAt,
+});
 batch.set(db.collection('reviews').doc('seed-done'), {
   gigId: 'seed-flutter',
   applicationId: 'seed-done',
   reviewerId: posterId,
   revieweeId: talentId,
+  reviewerName: 'Eric Murenzi',
   rating: 5,
   comment: 'Finished the two screens and the Firestore connection.',
   createdAt,

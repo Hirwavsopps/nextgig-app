@@ -52,3 +52,7 @@ app.*.map.json
 # Firebase Admin credentials for tool/seed.mjs
 *firebase-adminsdk*.json
 tool/node_modules/
+tool/rules-tests/node_modules/
+tool/rules-tests/*-debug.log
+config.bat
+node_modules
