@@ -6,6 +6,7 @@ import 'package:nextgig/core/theme/app_theme.dart';
 import 'package:nextgig/core/theme/theme_cubit.dart';
 import 'package:nextgig/features/gigs/presentation/cubit/bookmarks_cubit.dart';
 import 'package:nextgig/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:nextgig/features/notifications/presentation/cubit/notifications_cubit.dart';
 
 class NextGigApp extends StatelessWidget {
   const NextGigApp({super.key});
@@ -17,6 +18,7 @@ class NextGigApp extends StatelessWidget {
         BlocProvider<ThemeCubit>.value(value: sl<ThemeCubit>()),
         BlocProvider<BookmarksCubit>.value(value: sl<BookmarksCubit>()),
         BlocProvider<AuthCubit>.value(value: sl<AuthCubit>()),
+        BlocProvider<NotificationsCubit>.value(value: sl<NotificationsCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

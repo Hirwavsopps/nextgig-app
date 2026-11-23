@@ -13,4 +13,6 @@ class AppRoutes {
 
   static const String gigDetailPattern = '/gig/:id';
   static String gigDetail(String id) => '/gig/$id';
+
+  static const notifications = '/notifications';
 }
